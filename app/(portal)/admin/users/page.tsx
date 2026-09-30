@@ -33,8 +33,15 @@ export default async function AdminUsers() {
     <div className="split">
       <section className="panel">
         <div className="panel-head">
-          <h2>People with access</h2>
+          <h2>People &amp; access</h2>
+          <span className="meta">
+            {rows.filter((r) => r.role === "admin").length} admin · {rows.filter((r) => r.role === "editor").length} editor ·{" "}
+            {rows.filter((r) => r.role === "viewer").length} viewer
+          </span>
         </div>
+        <p className="meta" style={{ marginTop: -8 }}>
+          Change someone&apos;s access level from the dropdown. It saves straight away.
+        </p>
         {keyMissing && (
           <div className="note" style={{ marginBottom: 12 }}>
             <div>
@@ -46,9 +53,9 @@ export default async function AdminUsers() {
           <table>
             <thead>
               <tr>
-                <th>Name &amp; access</th>
+                <th>Name</th>
                 <th>Email</th>
-                <th>Role</th>
+                <th>Access level</th>
                 <th />
               </tr>
             </thead>
@@ -60,9 +67,9 @@ export default async function AdminUsers() {
           </table>
         </div>
         <p className="meta" style={{ marginTop: 10 }}>
-          Viewers see every market and can approve creative. Editors change content; admins can also manage people. Editor and admin access is
-          limited to @sunnyadvertising.com.au addresses. &ldquo;New link&rdquo; resends an invite or resets a password. Removing someone ends their
-          access immediately. Sessions end 8 hours after sign-in.
+          <b>Admin</b>: edits everything and manages people. <b>Editor</b>: edits portal content. <b>Viewer</b>: the client; sees every market and
+          can approve creative. Admin and editor are for @sunnyadvertising.com.au addresses only, and there must always be at least one admin.
+          &ldquo;New link&rdquo; resends an invite or resets a password. Removing someone ends their access immediately.
         </p>
       </section>
       <section className="panel">

@@ -11,7 +11,7 @@ const TABS = [
   ["data", "Performance data"],
   ["tracker", "Creative tracker"],
   ["team", "Who's who"],
-  ["users", "Users"],
+  ["users", "People & access"],
 ] as const;
 
 export function AdminNav({ isAdmin }: { isAdmin: boolean }) {

@@ -250,6 +250,15 @@ export const getSetting = cache(async (key: string) => {
   return { value: (data?.value as string | undefined) ?? "", updated_at: (data?.updated_at as string | undefined) ?? null };
 });
 
+/** Number of creatives per channel in a market (for the channel cards). */
+export const getCreativeCounts = cache(async (mid: string) => {
+  const supabase = await createClient();
+  const { data } = await supabase.from("creatives").select("channel_id").eq("market_id", mid);
+  const out = new Map<string, number>();
+  for (const r of data ?? []) out.set(r.channel_id as string, (out.get(r.channel_id as string) ?? 0) + 1);
+  return out;
+});
+
 /** Creatives for one market × channel, with short-lived signed URLs for uploaded assets. */
 export async function getCreatives(mid: string, cid: string) {
   const supabase = await createClient();

@@ -7,7 +7,7 @@ import { Icon } from "@/components/Icon";
 import { LocalTime } from "@/components/LocalTime";
 import { Updated } from "@/components/Updated";
 import { STATUS, TARGETING_FIELDS } from "@/lib/constants";
-import { getChanges, getCore, getCreatives, getMe, type Market } from "@/lib/data";
+import { getChanges, getCore, getCreativeCounts, getCreatives, getMe, type Market } from "@/lib/data";
 import { fmtDate, latest, money, num, pct, short, todayBrisbane } from "@/lib/format";
 
 export default async function MarketPage({ params }: { params: Promise<{ id: string; channel?: string[] }> }) {
@@ -76,7 +76,9 @@ export default async function MarketPage({ params }: { params: Promise<{ id: str
         </div>
       )}
 
-      <div className="kpis">
+      <ChannelCards core={core} m={m} active={requested} />
+
+      <div className="kpis mt">
         <div className="kpi">
           <small>Spend / week</small>
           <b className="num">{money(a.spendW, m.currency)}</b>
@@ -140,7 +142,7 @@ export default async function MarketPage({ params }: { params: Promise<{ id: str
         </section>
       </div>
 
-      <div className="tabs mt2" role="tablist" aria-label="Channels">
+      <div className="tabs mt2" role="tablist" aria-label="Channels" id="channel" style={{ scrollMarginTop: 16 }}>
         {ordered.map((c) => {
           const st = mc(id, c.id)?.status ?? "not_live";
           return (
@@ -160,6 +162,85 @@ export default async function MarketPage({ params }: { params: Promise<{ id: str
       </div>
       {active && <ChannelPanel core={core} m={m} cid={active} />}
     </>
+  );
+}
+
+/** One card per channel this market is running (live, paused or planned). Each opens its targeting & creative. */
+async function ChannelCards({ core, m, active }: { core: Awaited<ReturnType<typeof getCore>>; m: Market; active?: string }) {
+  const { channels, perf, mc } = core;
+  const onChannels = channels.filter((c) => ["live", "paused", "planned"].includes(mc(m.id, c.id)?.status ?? ""));
+  const offChannels = channels.filter((c) => !onChannels.includes(c));
+  const counts = await getCreativeCounts(m.id);
+  const { cur } = perf.months();
+
+  if (!onChannels.length)
+    return (
+      <div className="emptybox">
+        <b>No channels running in {m.code} yet</b>Each channel will show here with its targeting and creative once Sunny sets it live.
+      </div>
+    );
+
+  return (
+    <section aria-label={`Channels running in ${m.code}`}>
+      <div className="panel-head" style={{ marginBottom: 10 }}>
+        <h2>Channels</h2>
+        <span className="meta">Select a channel to see its targeting, creative and results</span>
+      </div>
+      <div className="grid g4">
+        {onChannels.map((c) => {
+          const ch = mc(m.id, c.id)!;
+          const a = perf.agg(m.id, [c.id], cur);
+          const hasPerf = perf.hasSpend(m.id, c.id);
+          const targeted = TARGETING_FIELDS.filter(([k]) => ch[k]).length;
+          const n = counts.get(c.id) ?? 0;
+          return (
+            <Link
+              key={c.id}
+              className="mcard"
+              href={`/market/${m.id}/${c.id}#channel`}
+              aria-current={active === c.id ? "true" : undefined}
+              style={active === c.id ? { borderColor: "var(--gold)" } : undefined}
+            >
+              <div className="mcard-top">
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700 }}>{c.name}</h3>
+                  <div className="mname">{ch.objective ? ch.objective.split("\n")[0] : "Objective not added yet"}</div>
+                </div>
+                <span className={`badge st-${ch.status}`}>{STATUS[ch.status]}</span>
+              </div>
+              {hasPerf ? (
+                <div className="mstats">
+                  <div className="mstat">
+                    <small>Spend / week</small>
+                    <b className="num">{money(a.spendW, m.currency)}</b>
+                  </div>
+                  <div className="mstat">
+                    <small>Leads / week</small>
+                    <b className="num">{num(a.leadsW, 1)}</b>
+                  </div>
+                </div>
+              ) : (
+                <span className="meta">No results in the media report yet</span>
+              )}
+              <div className="chips">
+                <span className="chip">{targeted ? `${targeted} of ${TARGETING_FIELDS.length} targeting fields` : "Targeting coming"}</span>
+                <span className="chip">
+                  {n} creative{n === 1 ? "" : "s"}
+                </span>
+              </div>
+              <span className="linkbtn" style={{ alignSelf: "flex-start" }}>
+                View targeting &amp; creative
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+      {offChannels.length > 0 && (
+        <p className="meta" style={{ margin: "8px 0 0" }}>
+          Not running in {m.code}: {offChannels.map((c) => c.name).join(", ")}
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -252,6 +333,67 @@ async function ChannelPanel({ core, m, cid }: { core: Awaited<ReturnType<typeof 
           />
         </section>
       )}
+      <div className="grid g2" style={{ marginBottom: 16 }}>
+        <section className="panel">
+          <div className="panel-head">
+            <h2>Targeting</h2>
+            <Updated at={ch?.updated_at} />
+          </div>
+          {filled.length ? (
+            <dl className="dl">
+              {TARGETING_FIELDS.map(([k, l]) => (
+                <Frag key={k} dt={l} dd={ch?.[k] || null} />
+              ))}
+            </dl>
+          ) : (
+            <div className="emptybox">
+              <b>Targeting summary coming</b>Your Sunny team will list audiences, locations, keywords and bidding here.
+            </div>
+          )}
+        </section>
+        <section className="panel">
+          <div className="panel-head">
+            <h2>Live creative &amp; messaging</h2>
+            <span className="meta">
+              {creatives.length} item{creatives.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          {creatives.length ? (
+            <div className="creative">
+              {creatives.map((cr) => {
+                const href = cr.signed_url || cr.asset_url;
+                return (
+                  <div key={cr.id} className="cr">
+                    <div className="stage">
+                      {cr.funnel_stage || "Funnel stage not set"}
+                      {cr.vertical ? ` · ${cr.vertical}` : ""}
+                    </div>
+                    <h3>{cr.name || "Untitled"}</h3>
+                    <p>{cr.message}</p>
+                    <div className="row" style={{ marginTop: 10, justifyContent: "space-between" }}>
+                      <span className={`badge st-${cr.status === "Live" ? "live" : cr.status === "Paused" ? "paused" : "planned"}`}>{cr.status}</span>
+                      {href && (
+                        <a className="linkbtn" href={href} target="_blank" rel="noopener noreferrer">
+                          View asset
+                        </a>
+                      )}
+                    </div>
+                    {cr.cta && (
+                      <p className="meta" style={{ marginTop: 8 }}>
+                        CTA: {cr.cta}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="emptybox">
+              <b>Creative coming</b>Your Sunny team will show the live ads and key messages for this channel here.
+            </div>
+          )}
+        </section>
+      </div>
       {hasPerf ? (
         <>
           <div className="grid g4">
@@ -391,67 +533,6 @@ async function ChannelPanel({ core, m, cid }: { core: Awaited<ReturnType<typeof 
         </div>
       )}
 
-      <div className="grid g2 mt">
-        <section className="panel">
-          <div className="panel-head">
-            <h2>Targeting</h2>
-            <Updated at={ch?.updated_at} />
-          </div>
-          {filled.length ? (
-            <dl className="dl">
-              {TARGETING_FIELDS.map(([k, l]) => (
-                <Frag key={k} dt={l} dd={ch?.[k] || null} />
-              ))}
-            </dl>
-          ) : (
-            <div className="emptybox">
-              <b>Targeting summary coming</b>Your Sunny team will list audiences, locations, keywords and bidding here.
-            </div>
-          )}
-        </section>
-        <section className="panel">
-          <div className="panel-head">
-            <h2>Live creative &amp; messaging</h2>
-            <span className="meta">
-              {creatives.length} item{creatives.length === 1 ? "" : "s"}
-            </span>
-          </div>
-          {creatives.length ? (
-            <div className="creative">
-              {creatives.map((cr) => {
-                const href = cr.signed_url || cr.asset_url;
-                return (
-                  <div key={cr.id} className="cr">
-                    <div className="stage">
-                      {cr.funnel_stage || "Funnel stage not set"}
-                      {cr.vertical ? ` · ${cr.vertical}` : ""}
-                    </div>
-                    <h3>{cr.name || "Untitled"}</h3>
-                    <p>{cr.message}</p>
-                    <div className="row" style={{ marginTop: 10, justifyContent: "space-between" }}>
-                      <span className={`badge st-${cr.status === "Live" ? "live" : cr.status === "Paused" ? "paused" : "planned"}`}>{cr.status}</span>
-                      {href && (
-                        <a className="linkbtn" href={href} target="_blank" rel="noopener noreferrer">
-                          View asset
-                        </a>
-                      )}
-                    </div>
-                    {cr.cta && (
-                      <p className="meta" style={{ marginTop: 8 }}>
-                        CTA: {cr.cta}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="emptybox">
-              <b>Creative coming</b>Your Sunny team will show the live ads and key messages for this channel here.
-            </div>
-          )}
-        </section>
-      </div>
     </div>
   );
 }

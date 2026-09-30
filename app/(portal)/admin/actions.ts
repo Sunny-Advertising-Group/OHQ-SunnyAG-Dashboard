@@ -568,17 +568,26 @@ export async function newAccessLink(userId: string): Promise<InviteState> {
   }
 }
 
-export async function changeRole(_: ActionState, fd: FormData) {
+/** Admin / editor / viewer for one person. Saves as soon as the dropdown changes. */
+export async function setRole(_: ActionState, fd: FormData) {
   return guard(async () => {
     const { supabase, user } = await requireAdmin();
     const id = s(fd, "id");
-    if (id === user.id) throw new Error("You can't change your own role.");
+    if (id === user.id) throw new Error("You can't change your own access level. Ask another admin.");
     const role = oneOf(s(fd, "role"), ["viewer", "editor", "admin"] as const, "role");
     const { data: target } = await supabase.from("profiles").select("email").eq("id", id).single();
     if (role !== "viewer" && !target?.email?.endsWith("@sunnyadvertising.com.au"))
       throw new Error("Editor and admin access is for @sunnyadvertising.com.au addresses only.");
-    check((await supabase.from("profiles").update({ role, name: s(fd, "name"), org: s(fd, "org") }).eq("id", id)).error);
-    return done("Access updated");
+    check((await supabase.from("profiles").update({ role }).eq("id", id)).error);
+    return done(role === "admin" ? "Now an admin" : role === "editor" ? "Now an editor" : "Now a viewer");
+  });
+}
+
+export async function saveProfile(_: ActionState, fd: FormData) {
+  return guard(async () => {
+    const { supabase } = await requireAdmin();
+    check((await supabase.from("profiles").update({ name: s(fd, "name"), org: s(fd, "org") }).eq("id", s(fd, "id"))).error);
+    return done();
   });
 }
 
