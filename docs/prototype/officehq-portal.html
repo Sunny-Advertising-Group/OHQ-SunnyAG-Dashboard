@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OfficeHQ × Sunny — Media Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#FBFBFB; --panel:#FFFFFF; --line:#EBEBEB; --line-2:#DADADA;
+  --ink:#0A0A0A; --muted:#585858; --faint:#8A8A8A;
+  --gold:#FDB600; --gold-ink:#8A6300; --gold-soft:#FFF5DA;
+  --grey-2:#585858; --grey-3:#9E9E9E; --grey-4:#C2C2C2; --grey-5:#E0E0E0;
+  --good:#1E8A4C; --good-soft:#E6F4EC; --bad:#B4432F; --bad-soft:#FBEAE6; --warn:#9A6A00; --warn-soft:#FFF3D1;
+  --radius:10px; --font:'Poppins',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A0A0A; --panel:#141414; --line:#262626; --line-2:#333;
+    --ink:#F5F5F5; --muted:#A8A8A8; --faint:#7A7A7A;
+    --gold-ink:#FDB600; --gold-soft:rgba(253,182,0,.12);
+    --grey-2:#A8A8A8; --grey-3:#7A7A7A; --grey-4:#555; --grey-5:#333;
+    --good:#4CC486; --good-soft:rgba(76,196,134,.12); --bad:#F08A73; --bad-soft:rgba(240,138,115,.12); --warn:#F5C451; --warn-soft:rgba(245,196,81,.12);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A0A0A; --panel:#141414; --line:#262626; --line-2:#333;
+  --ink:#F5F5F5; --muted:#A8A8A8; --faint:#7A7A7A;
+  --gold-ink:#FDB600; --gold-soft:rgba(253,182,0,.12);
+  --grey-2:#A8A8A8; --grey-3:#7A7A7A; --grey-4:#555; --grey-5:#333;
+  --good:#4CC486; --good-soft:rgba(76,196,134,.12); --bad:#F08A73; --bad-soft:rgba(240,138,115,.12); --warn:#F5C451; --warn-soft:rgba(245,196,81,.12);
+}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- Layout ---------- */
+.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:0;height:100vh;border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;padding:22px 16px 18px;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px 22px}
+.brand .mark{width:30px;height:30px;border-radius:50%;background:var(--gold);display:grid;place-items:center;flex:none}
+.brand .mark span{width:12px;height:12px;border-radius:50%;background:var(--ink)}
+.brand b{font-weight:800;font-size:15px;letter-spacing:-.01em;line-height:1.15;display:block}
+.brand small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.nav-group{margin-top:6px}
+.nav-label{font-size:11px;color:var(--faint);padding:14px 10px 6px;font-weight:500}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--muted);font-weight:500;font-size:13.5px}
+.nav a:hover{background:var(--bg);color:var(--ink)}
+.nav a.on{background:var(--gold-soft);color:var(--ink);font-weight:600}
+.nav a .code{font-weight:800;font-size:11px;width:26px;height:20px;border-radius:5px;display:grid;place-items:center;background:var(--bg);border:1px solid var(--line);color:var(--ink);flex:none}
+.nav a.on .code{background:var(--gold);border-color:var(--gold);color:#0A0A0A}
+.nav svg{width:17px;height:17px;flex:none}
+.side-foot{margin-top:auto;padding:14px 8px 0;border-top:1px solid var(--line)}
+.who{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+.who b{display:block;font-size:13px;font-weight:600;line-height:1.2}
+.who small{color:var(--muted);font-size:11.5px}
+.linkbtn{background:none;border:0;padding:0;color:var(--muted);cursor:pointer;font-size:12.5px;text-decoration:underline;text-underline-offset:3px}
+.linkbtn:hover{color:var(--ink)}
+.topbar{display:none}
+main{min-width:0;padding:34px 40px 60px;max-width:1280px;width:100%}
+
+/* ---------- Type ---------- */
+h1{font-size:34px;font-weight:800;letter-spacing:-.025em;line-height:1.1;margin:0}
+h2{font-size:18px;font-weight:700;letter-spacing:-.01em;margin:0}
+h3{font-size:14.5px;font-weight:600;margin:0}
+.sub{color:var(--muted);margin:6px 0 0;max-width:68ch}
+.meta{color:var(--faint);font-size:12px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:26px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- Surfaces ---------- */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.split{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:16px}
+.stack{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+.mt{margin-top:16px}.mt2{margin-top:28px}
+
+/* ---------- Hero ---------- */
+.hero{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.6fr);gap:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.hero-l{padding:28px 28px 26px;border-right:1px solid var(--line);display:flex;flex-direction:column}
+.hero-big{font-size:84px;font-weight:900;letter-spacing:-.05em;line-height:.95;color:var(--ink);margin:10px 0 6px}
+.hero-big .unit{font-size:20px;font-weight:600;letter-spacing:-.01em;color:var(--muted);margin-left:8px}
+.hero-l .rule{height:4px;width:56px;background:var(--gold);border-radius:2px;margin:18px 0 16px}
+.hero-r{padding:22px 24px 16px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px;margin-top:auto}
+.kv dt{color:var(--muted)}.kv dd{margin:0;font-weight:600;text-align:right}
+
+/* ---------- Market cards ---------- */
+.mcard{display:flex;flex-direction:column;gap:14px;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 16px;transition:border-color .15s}
+.mcard:hover{border-color:var(--ink)}
+.mcard-top{display:flex;justify-content:space-between;align-items:flex-start}
+.mcode{font-size:30px;font-weight:900;letter-spacing:-.04em;line-height:1}
+.mname{font-size:12.5px;color:var(--muted);margin-top:3px}
+.mstats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mstat small{display:block;color:var(--muted);font-size:11.5px}
+.mstat b{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.live{border-color:transparent;background:var(--good-soft);color:var(--good)}
+
+/* ---------- Deltas / badges ---------- */
+.delta{font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:999px;white-space:nowrap;display:inline-block}
+.delta.up{background:var(--good-soft);color:var(--good)}
+.delta.down{background:var(--bad-soft);color:var(--bad)}
+.delta.flat{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.st-live{background:var(--good-soft);color:var(--good)}
+.st-paused{background:var(--warn-soft);color:var(--warn)}
+.st-planned{background:var(--gold-soft);color:var(--gold-ink)}
+.st-not_live,.st-awaiting{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+
+/* ---------- Links ---------- */
+.qlinks{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.qlink{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:var(--radius);text-decoration:none;background:var(--panel)}
+a.qlink:hover{border-color:var(--ink)}
+.qlink .ic{width:34px;height:34px;border-radius:8px;background:var(--gold-soft);display:grid;place-items:center;flex:none;color:var(--gold-ink)}
+.qlink .ic svg{width:17px;height:17px}
+.qlink b{display:block;font-weight:600;font-size:13.5px;line-height:1.3}
+.qlink small{color:var(--muted);font-size:12px;line-height:1.4;display:block;margin-top:2px}
+.qlink.unset{border-style:dashed;cursor:default}
+.qlink.unset .ic{background:var(--bg);color:var(--faint)}
+
+/* ---------- Feed ---------- */
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:grid;grid-template-columns:74px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.feed li:first-child{border-top:0;padding-top:2px}
+.feed .d{font-size:12px;color:var(--muted);font-weight:500}
+.feed .t{font-size:13.5px}
+.feed .tags{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
+
+/* ---------- Tables ---------- */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:12px;background:var(--bg);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+.empty-cell{color:var(--faint)}
+
+/* ---------- Tabs ---------- */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;margin-bottom:20px}
+.tab{padding:10px 14px 11px;border:0;background:none;cursor:pointer;color:var(--muted);font-weight:500;font-size:13.5px;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;gap:8px;align-items:center;text-decoration:none}
+.tab:hover{color:var(--ink)}
+.tab.on{color:var(--ink);font-weight:600;border-bottom-color:var(--gold)}
+.tab .dot{width:7px;height:7px;border-radius:50%;background:var(--grey-4)}
+.tab .dot.live{background:var(--good)}
+.tab.dim{opacity:.6}
+
+/* ---------- Charts ---------- */
+.chart svg{width:100%;height:auto;display:block;overflow:visible}
+.chart text{font-family:var(--font);fill:var(--faint);font-size:11px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.legend i.ln{height:3px;border-radius:2px;width:14px}
+
+/* ---------- KPI tiles ---------- */
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.kpi{padding:16px 18px;border-left:1px solid var(--line)}
+.kpi:first-child{border-left:0}
+.kpi small{display:block;color:var(--muted);font-size:12px}
+.kpi b{display:block;font-size:22px;font-weight:700;letter-spacing:-.02em;margin:2px 0 4px}
+
+/* ---------- Detail lists ---------- */
+.dl{display:grid;grid-template-columns:150px 1fr;gap:0;margin:0}
+.dl dt{color:var(--muted);font-size:12.5px;padding:10px 0;border-top:1px solid var(--line)}
+.dl dd{margin:0;padding:10px 0;border-top:1px solid var(--line);white-space:pre-wrap;font-size:13.5px}
+.dl dt:first-of-type,.dl dd:first-of-type{border-top:0}
+.nodata{color:var(--faint);font-style:normal}
+.note{display:flex;gap:12px;padding:14px 16px;border-radius:var(--radius);background:var(--warn-soft);color:var(--ink);font-size:13px;border:1px solid transparent}
+.note b{font-weight:600}
+.note svg{flex:none;width:18px;height:18px;color:var(--warn);margin-top:2px}
+.emptybox{border:1px dashed var(--line-2);border-radius:var(--radius);padding:22px;text-align:center;color:var(--muted);font-size:13px}
+.emptybox b{display:block;color:var(--ink);font-weight:600;margin-bottom:2px}
+
+/* ---------- Creative ---------- */
+.creative{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.cr{border:1px solid var(--line);border-radius:var(--radius);padding:14px;background:var(--panel)}
+.cr .stage{font-size:11.5px;color:var(--muted)}
+.cr h3{margin:4px 0 6px}
+.cr p{margin:0;font-size:13px;color:var(--muted)}
+
+/* ---------- Forms ---------- */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);font-weight:600;font-size:13px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{opacity:.88}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#0A0A0A}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-2)}
+.btn.ghost:hover{border-color:var(--ink);opacity:1}
+.btn.sm{padding:5px 11px;font-size:12px}
+.btn.danger{background:transparent;color:var(--bad);border-color:var(--line-2)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+label.f{display:grid;gap:5px;font-size:12.5px;font-weight:500;color:var(--muted)}
+.inp,select.inp,textarea.inp{width:100%;padding:9px 11px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel);font-size:13.5px;color:var(--ink)}
+textarea.inp{min-height:74px;resize:vertical;line-height:1.5}
+.inp:focus{outline:none;border-color:var(--ink)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.fgrid .full{grid-column:1/-1}
+.admin-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.pill{padding:7px 13px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel);cursor:pointer;font-size:12.5px;font-weight:500;text-decoration:none;color:var(--muted)}
+.pill.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.edit-row{display:grid;grid-template-columns:1.1fr 2fr 1.6fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.edit-row:first-child{border-top:0}
+.crow{border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:grid;gap:10px;grid-template-columns:repeat(4,minmax(0,1fr))}
+.crow .full{grid-column:1/-1}
+.crow .half{grid-column:span 2}
+.checks{list-style:none;margin:0;padding:0}
+.checks li{padding:10px 0;border-top:1px solid var(--line);display:flex;gap:10px;font-size:13px}
+.checks li:first-child{border-top:0}
+.checks .sev{flex:none;font-size:11px;font-weight:700;padding:1px 7px;border-radius:5px;height:fit-content;margin-top:2px}
+.sev.hi{background:var(--bad-soft);color:var(--bad)}
+.sev.md{background:var(--warn-soft);color:var(--warn)}
+.sev.lo{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.dropzone{border:1.5px dashed var(--line-2);border-radius:var(--radius);padding:26px;text-align:center;cursor:pointer;background:var(--bg)}
+.dropzone:hover,.dropzone.over{border-color:var(--gold);background:var(--gold-soft)}
+
+/* ---------- Team ---------- */
+.clocks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.clock{padding:14px 16px;border-left:1px solid var(--line)}
+.clock:first-child{border-left:0;background:var(--gold-soft)}
+.clock small{display:block;font-size:11.5px;color:var(--muted)}
+.clock b{display:block;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.clock span{font-size:11.5px;color:var(--muted)}
+.person{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.person .avatar{width:48px;height:48px;font-size:15px;background:var(--gold);color:#0A0A0A}
+.person.placeholder{border-style:dashed}
+.person.placeholder .avatar{background:var(--bg);color:var(--faint);border:1px dashed var(--line-2)}
+.person h3{font-size:15px}
+.person .role{color:var(--muted);font-size:12.5px}
+.person .contact{display:grid;gap:3px;margin-top:10px;font-size:13px}
+.person .contact a{text-decoration:none;color:var(--ink);border-bottom:1px solid var(--line-2);width:fit-content}
+.person .contact a:hover{border-color:var(--gold)}
+
+/* ---------- Login ---------- */
+.login{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);height:100%}
+.login-l{background:#0A0A0A;color:#fff;padding:44px 48px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.login-l h1{font-size:52px;font-weight:900;letter-spacing:-.04em;line-height:1.02;color:#fff;margin:0 0 16px;max-width:12ch}
+.login-l p{color:#B8B8B8;max-width:44ch;margin:0}
+.login-l .wave{position:absolute;inset:auto -80px -60px -80px;opacity:1;pointer-events:none}
+.login-r{display:grid;place-items:center;padding:40px 24px;background:var(--bg)}
+.login-form{width:100%;max-width:380px}
+.login-form h2{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.err{color:var(--bad);font-size:12.5px;min-height:18px}
+.demo{margin-top:26px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.demo button{display:block;width:100%;text-align:left;margin-top:8px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer}
+.demo button:hover{border-color:var(--ink)}
+.demo button b{color:var(--ink);font-weight:600}
+
+.toast{max-width:calc(100vw - 32px);text-align:center;position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:all .2s;z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.proto{font-size:11.5px;color:var(--faint);margin-top:40px;padding-top:16px;border-top:1px solid var(--line)}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1100px){
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .qlinks{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .kpi:nth-child(4){border-left:0}
+  .kpi:nth-child(n+4){border-top:1px solid var(--line)}
+  .hero{grid-template-columns:minmax(0,1fr)}.hero-l{border-right:0;border-bottom:1px solid var(--line)}
+  .split{grid-template-columns:minmax(0,1fr)}
+  .clocks{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .clock:nth-child(4){border-left:0}.clock:nth-child(n+4){border-top:1px solid var(--line)}
+}
+@media (max-width:820px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;inset:0 auto 0 0;width:270px;z-index:40;transform:translateX(-100%);transition:transform .2s;padding-top:calc(22px + env(safe-area-inset-top,0px))}
+  .side.open{transform:none;box-shadow:0 0 0 100vw rgba(0,0,0,.35)}
+  .topbar{display:flex;position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px;align-items:center;gap:12px}
+  .topbar button{background:none;border:1px solid var(--line-2);border-radius:8px;padding:6px 10px;cursor:pointer}
+  main{padding:22px 16px 48px}
+  h1{font-size:27px}
+  .hero-big{font-size:64px}
+  .g2,.g3,.g4,.qlinks,.fgrid{grid-template-columns:minmax(0,1fr)}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpi{border-left:0!important;border-top:1px solid var(--line)}
+  .kpi:nth-child(-n+2){border-top:0}.kpi:nth-child(even){border-left:1px solid var(--line)!important}
+  .clocks{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .clock{border-left:0!important;border-top:1px solid var(--line)}
+  .clock:first-child{grid-column:1/-1;border-top:0}
+  .login{grid-template-columns:minmax(0,1fr)}.login-l{padding:32px 24px;min-height:300px}.login-l h1{font-size:38px}
+  .edit-row{grid-template-columns:minmax(0,1fr)}
+  .crow{grid-template-columns:minmax(0,1fr)}.crow .half{grid-column:auto}
+  .dl{grid-template-columns:minmax(0,1fr)}.dl dd{border-top:0;padding-top:0}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =====================================================================
+   OfficeHQ × Sunny Advertising — Client Media Portal (PROTOTYPE)
+   - Mock auth (invite-only, roles). Production: Supabase Auth + RLS.
+   - Data persists to this browser's localStorage only. Production: Supabase tables.
+   - Performance data seeded from "OfficeHQ - Media Report & Tracker 2026.xlsx".
+   ===================================================================== */
+
+const PERF_SEED = {"weeks":[{"date":"2026-08-02","label":"W1","month":"2026-08"},{"date":"2026-08-09","label":"W2","month":"2026-08"},{"date":"2026-08-16","label":"W3","month":"2026-08"},{"date":"2026-08-23","label":"W4","month":"2026-08"},{"date":"2026-08-30","label":"W5","month":"2026-08"},{"date":"2026-09-06","label":"W1","month":"2026-09"},{"date":"2026-09-13","label":"W2","month":"2026-09"},{"date":"2026-09-20","label":"W3","month":"2026-09"},{"date":"2026-09-27","label":"W4","month":"2026-09"},{"date":"2026-10-04","label":"W1","month":"2026-10"},{"date":"2026-10-11","label":"W2","month":"2026-10"},{"date":"2026-10-18","label":"W3","month":"2026-10"},{"date":"2026-10-25","label":"W4","month":"2026-10"},{"date":"2026-11-01","label":"W1","month":"2026-11"},{"date":"2026-11-08","label":"W2","month":"2026-11"},{"date":"2026-11-15","label":"W3","month":"2026-11"},{"date":"2026-11-22","label":"W4","month":"2026-11"},{"date":"2026-11-29","label":"W5","month":"2026-11"}],"markets":{"au":{"google":{"spend":[4061.5,4490.14,3669.64,4411.4,4097.83,4852.47,6763.99,5039.26,null,null,null,null,null,null,null,null,null,null],"impressions":[1737,1723,1435,1690,2134,2224,2816,3066,null,null,null,null,null,null,null,null,null,null],"clicks":[250,266,192,189,249,255,231,236,null,null,null,null,null,null,null,null,null,null],"ctr":[0.1439,0.1544,0.1338,0.1118,0.1167,0.1147,0.082,0.077,null,null,null,null,null,null,null,null,null,null],"cpc":[16.25,16.88,19.11,23.34,16.46,19.03,29.28,21.35,null,null,null,null,null,null,null,null,null,null],"leads":[15,16,13.01,9.78,12.55,9.97,19.73,10,null,null,null,null,null,null,null,null,null,null],"cr":[0.06,0.0602,0.0678,0.0517,0.0504,0.0391,0.0854,0.0424,null,null,null,null,null,null,null,null,null,null]},"organic":{"sessions":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]},"linkedin":{"spend":[0,0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null],"impressions":[0,0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null],"clicks":[0,0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null],"ctr":[0,0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null],"cpc":[0,0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null],"leads":[0,0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null],"cr":[0,0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null]},"meta":{"spend":[339.29,396.53,417.63,564.43,649.61,912.45,1004.84,1166.35,null,null,null,null,null,null,null,null,null,null],"impressions":[16409,19802,20485,39836,39631,64766,84655,103748,null,null,null,null,null,null,null,null,null,null],"clicks":[223,331,null,null,null,1170,1672,null,null,null,null,null,null,null,null,null,null,null],"ctr":[0.0136,0.0167,0.0236,0.0222,0.0223,0.0181,0.0198,0.0181,null,null,null,null,null,null,null,null,null,null],"cpc":[1.52,1.2,0.86,0.64,0.73,0.78,0.6,0.62,null,null,null,null,null,null,null,null,null,null],"leads":[0,0,1,2,1,2,4,1,null,null,null,null,null,null,null,null,null,null],"cr":[0,0,0.0021,0.0023,0.0011,0.0017,0.0024,0.0005,null,null,null,null,null,null,null,null,null,null]},"chatgpt":{"spend":[0,0,0,0,0,null,null,null,null,null,null,null,null,null,null,null,null,null],"impressions":[0,0,0,0,0,null,null,null,null,null,null,null,null,null,null,null,null,null],"clicks":[0,0,0,0,0,null,null,null,null,null,null,null,null,null,null,null,null,null],"ctr":[0,0,0,0,0,null,null,null,null,null,null,null,null,null,null,null,null,null],"cpc":[0,0,0,0,0,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[0,0,0,0,0,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[0,0,0,0,0,null,null,null,null,null,null,null,null,null,null,null,null,null]},"programmatic":{"spend":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"impressions":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"clicks":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"ctr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cpc":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]}},"us":{"google":{"spend":[7465.55,9158.55,8087.63,5457.58,7154.53,6375.74,6237.05,5770.64,null,null,null,null,null,null,null,null,null,null],"impressions":[5423,5381,4922,4067,4271,3818,3827,4209,null,null,null,null,null,null,null,null,null,null],"clicks":[282,318,295,247,273,248,233,212,null,null,null,null,null,null,null,null,null,null],"ctr":[0.052,0.0591,0.0599,0.0607,0.0639,0.065,0.0609,0.0504,null,null,null,null,null,null,null,null,null,null],"cpc":[26.47,28.8,27.42,22.1,26.21,25.71,26.77,27.22,null,null,null,null,null,null,null,null,null,null],"leads":[29,34.79,25.5,30.49,25,26,21,24,null,null,null,null,null,null,null,null,null,null],"cr":[0.1028,0.1094,0.0864,0.1234,0.0916,0.1048,0.0901,0.1132,null,null,null,null,null,null,null,null,null,null]},"organic":{"sessions":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]},"linkedin":{"spend":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null],"impressions":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null],"clicks":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null],"ctr":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null],"cpc":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null],"leads":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null],"cr":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null]},"meta":{"spend":[279.12,279.43,279.02,641.42,766.2,766.71,761.45,878.59,null,null,null,null,null,null,null,null,null,null],"impressions":[21481,23481,21804,26398,31481,22948,21640,26906,null,null,null,null,null,null,null,null,null,null],"clicks":[295,293,267,622,1019,583,657,902,null,null,null,null,null,null,null,null,null,null],"ctr":[0.0137,0.0125,0.0122,0.0236,0.0324,0.0254,0.0304,0.0335,null,null,null,null,null,null,null,null,null,null],"cpc":[0.95,0.95,1.05,1.03,0.75,1.32,1.16,0.97,null,null,null,null,null,null,null,null,null,null],"leads":[0,0,0,1,1,1,5,3,null,null,null,null,null,null,null,null,null,null],"cr":[0,0,0,0.0016,0.001,0.0017,0.0076,0.0033,null,null,null,null,null,null,null,null,null,null]},"chatgpt":{"spend":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"impressions":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"clicks":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"ctr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cpc":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]},"programmatic":{"spend":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"impressions":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"clicks":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"ctr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cpc":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]}},"uk":{"google":{"spend":[1344.6,1681.98,4441.74,2653.24,2924.67,2710.73,2544.61,2563.49,null,null,null,null,null,null,null,null,null,null],"impressions":[1426,1223,1749,1283,1540,1669,1643,1874,null,null,null,null,null,null,null,null,null,null],"clicks":[103,89,133,121,111,101,110,104,null,null,null,null,null,null,null,null,null,null],"ctr":[0.0722,0.0728,null,null,null,0.0605,0.067,0.0555,null,null,null,null,null,null,null,null,null,null],"cpc":[13.05,18.9,33.4,21.93,26.35,26.84,23.13,24.65,null,null,null,null,null,null,null,null,null,null],"leads":[3,5,7,8.76,6,5,5,3,null,null,null,null,null,null,null,null,null,null],"cr":[0.0291,0.0562,0.0526,0.0724,0.0541,0.0495,0.0455,0.0288,null,null,null,null,null,null,null,null,null,null]},"organic":{"sessions":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]},"linkedin":{"spend":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null],"impressions":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null],"clicks":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null],"ctr":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null],"cpc":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null],"leads":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null],"cr":[0,0,0,0,0,0,0,0,null,null,null,null,null,null,null,null,null,null]},"meta":{"spend":[157.27,157.32,156.5,278.43,567.15,566.43,566.4,381.1,null,null,null,null,null,null,null,null,null,null],"impressions":[21012,22714,23150,39671,75858,67324,65438,37613,null,null,null,null,null,null,null,null,null,null],"clicks":[625,626,672,985,1482,1407,1232,1134,null,null,null,null,null,null,null,null,null,null],"ctr":[0.0297,0.0276,0.029,0.0248,0.0195,0.0209,0.0188,0.0301,null,null,null,null,null,null,null,null,null,null],"cpc":[0.25,0.25,0.23,0.28,0.38,0.4,0.46,0.34,null,null,null,null,null,null,null,null,null,null],"leads":[0,0,0,0,0,0,1,1,null,null,null,null,null,null,null,null,null,null],"cr":[0,0,0,0,0,0,0.0008,0.0009,null,null,null,null,null,null,null,null,null,null]},"chatgpt":{"spend":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"impressions":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"clicks":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"ctr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cpc":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]},"programmatic":{"spend":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"impressions":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"clicks":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"ctr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cpc":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]}},"nz":{"google":{"spend":[331.39,381.18,487.97,398.43,336.85,287.78,368.47,364.48,null,null,null,null,null,null,null,null,null,null],"impressions":[187,111,115,80,138,72,104,112,null,null,null,null,null,null,null,null,null,null],"clicks":[16,10,null,null,null,10,18,13,null,null,null,null,null,null,null,null,null,null],"ctr":[0.0856,0.0901,null,null,null,0.1389,0.1731,0.1161,null,null,null,null,null,null,null,null,null,null],"cpc":[20.71,38.12,null,null,null,28.78,20.47,28.04,null,null,null,null,null,null,null,null,null,null],"leads":[2,0,0,2,1,2,0,0,null,null,null,null,null,null,null,null,null,null],"cr":[0.125,0,0,0.1176,0.0769,0.2,0,0,null,null,null,null,null,null,null,null,null,null]},"organic":{"sessions":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]},"linkedin":{"spend":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"impressions":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"clicks":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"ctr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cpc":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]},"meta":{"spend":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"impressions":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"clicks":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"ctr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cpc":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]},"chatgpt":{"spend":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"impressions":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"clicks":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"ctr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cpc":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]},"programmatic":{"spend":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"impressions":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"clicks":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"ctr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cpc":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"leads":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"cr":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]}}},"topline":{"Monthly Marketing Budget (AUD)":{"2026-08":108381.33,"2026-09":0,"2026-10":0,"2026-11":0},"Monthly Marketing Spend (AUD)":{"2026-08":88133.15,"2026-09":0,"2026-10":0,"2026-11":0},"Spend %":{"2026-08":0,"2026-09":0,"2026-10":0,"2026-11":0},"Lead Target":{"2026-08":0,"2026-09":0,"2026-10":0,"2026-11":0},"Lead Tracking (Actual - minus Fraud)":{"2026-08":0,"2026-09":0,"2026-10":0,"2026-11":0},"Lead % Change YoY":{"2026-08":0,"2026-09":0,"2026-10":0,"2026-11":0}}};
+
+const MARKETS = [
+  {id:'au', code:'AU', name:'OfficeHQ AU', country:'Australia', currency:'AUD', tz:'Australia/Sydney', tzLabel:'Sydney'},
+  {id:'nz', code:'NZ', name:'ReceptionHQ NZ', country:'New Zealand', currency:'NZD', tz:'Pacific/Auckland', tzLabel:'Auckland'},
+  {id:'uk', code:'UK', name:'ReceptionHQ UK', country:'United Kingdom', currency:'GBP', tz:'Europe/London', tzLabel:'London'},
+  {id:'us', code:'US', name:'ReceptionHQ US', country:'United States', currency:'USD', tz:'America/New_York', tzLabel:'New York'},
+];
+const CHANNELS = [
+  {id:'google', name:'Google Ads', color:'var(--gold)', hex:'#FDB600'},
+  {id:'meta', name:'Meta', color:'var(--grey-2)', hex:'#585858'},
+  {id:'linkedin', name:'LinkedIn', color:'var(--grey-3)', hex:'#9E9E9E'},
+  {id:'programmatic', name:'Programmatic', color:'var(--grey-4)', hex:'#C2C2C2'},
+  {id:'microsoft', name:'Microsoft Ads', color:'var(--grey-4)', hex:'#C2C2C2'},
+  {id:'chatgpt', name:'ChatGPT ads', color:'var(--grey-5)', hex:'#E0E0E0'},
+  {id:'organic', name:'Organic & AI search', color:'var(--grey-5)', hex:'#E0E0E0'},
+];
+const STATUS = {live:'Live', paused:'Paused', planned:'Planned', not_live:'Not live', awaiting:'Awaiting data'};
+const TARGETING_FIELDS = [
+  ['objective','Objective'],['audiences','Audiences'],['locations','Locations'],['keywords','Keywords / themes'],
+  ['exclusions','Exclusions'],['bidding','Bid strategy'],['schedule','Schedule & devices']
+];
+const VERTICALS = ['Generic','Legal','Finance','Real Estate'];
+const FUNNEL = ['Upper','Mid','Lower – Retargeting free trials','Lower – Retargeting website','Lower – Retargeting checkout','Lower – Abandoned cart'];
+
+const ICON = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
+  creative:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg>',
+  team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.5c2.7 0 4.8 1.6 5.5 4.5"/></svg>',
+  _req:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg>',
+  admin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  sheet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>',
+  link:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg>',
+  warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg>',
+  ext:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg>',
+  menu:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+};
+
+/* ---------------- Seed state ---------------- */
+function seedChannels(mid){
+  const out = {};
+  for (const c of CHANNELS){
+    const s = PERF_SEED.markets[mid]?.[c.id];
+    const hasSpend = s?.spend?.some(v => v > 0);
+    const status = c.id === 'organic' ? 'awaiting' : hasSpend ? 'live' : 'not_live';
+    out[c.id] = {status, whatagraph:'', embed:false,
+      targeting:Object.fromEntries(TARGETING_FIELDS.map(([k]) => [k,''])),
+      creatives:[], notes:''};
+  }
+  return out;
+}
+function buildSeed(){
+  return {
+    version:1,
+    updated:{performance:'2026-09-30', links:'2026-10-01', creative:'2026-10-01', team:'2026-10-01'},
+    users:[
+      {email:'lily@sunnyadvertising.com.au', name:'Lily Hunter', org:'Sunny Advertising', role:'admin'},
+      {email:'client@officehq.com.au', name:'OfficeHQ team', org:'OfficeHQ', role:'viewer'},
+    ],
+    links:[
+      {id:'l1', label:'Whatagraph dashboard', desc:'Live cross-channel reporting', url:'', icon:'chart'},
+      {id:'l2', label:'Media WIP', desc:'Work in progress & open actions', url:'', icon:'sheet'},
+      {id:'l3', label:'Flight plan', desc:'Channel budgets & timings by market', url:'', icon:'cal'},
+      {id:'l4', label:'Media report & tracker', desc:'Weekly numbers behind this portal', url:'', icon:'sheet'},
+      {id:'l5', label:'Creative folder', desc:'Approved assets by market', url:'', icon:'folder'},
+      {id:'l6', label:'Monthly reports', desc:'Archive of past reports', url:'', icon:'folder'},
+    ],
+    markets:Object.fromEntries(MARKETS.map(m => [m.id, {
+      note: m.id === 'uk' ? 'GDPR cookie consent was implemented mid-July 2026 and is denied by default. Actual traffic and conversions will likely be significantly higher than what is tracked from here on.' : '',
+      commentary:'',
+      channels: seedChannels(m.id)
+    }])),
+    perf: PERF_SEED,
+    perfSource:'OfficeHQ - Media Report & Tracker 2026.xlsx',
+    changes:[
+      {id:'c1', date:'2026-08-23', market:'all', channel:'meta', type:'Budget', text:'Meta weekly spend stepped up in the US and UK from w/c 23 Aug. AU Meta has been scaling steadily since early August.', by:'Sunny'},
+      {id:'c2', date:'2026-07-15', market:'uk', channel:'all', type:'Tracking', text:'GDPR cookie consent went live on the UK site (denied by default). Tracked leads now understate actual results.', by:'Sunny'},
+    ],
+    tracker: FUNNEL.map(stage => ({stage, Generic:'', Legal:'', Finance:'', 'Real Estate':'', cta:'', url:'', asset:'', shared:'No', approval:'Not started', live:'Not live'})),
+    hours:'Sunny works 8:30am–5pm Mon–Fri Queensland time (AEST, no daylight saving).',
+    team:[
+      {id:'t1', name:'Lily Hunter', role:'Media Account Coordinator', focus:'Day-to-day media, programmatic, reporting', email:'lily@sunnyadvertising.com.au', phone:'', escalation:false},
+      {id:'t2', name:'', role:'Account Director', focus:'Strategy & escalation', email:'', phone:'', escalation:true},
+      {id:'t3', name:'', role:'Paid Search Specialist', focus:'Google & Microsoft Ads', email:'', phone:'', escalation:false},
+      {id:'t4', name:'', role:'Paid Social Specialist', focus:'Meta & LinkedIn', email:'', phone:'', escalation:false},
+    ],
+  };
+}
+
+/* ---------------- Persistence ---------------- */
+const KEY = 'ohq_portal_v1';
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e){ S = null; }
+if (!S || S.version !== 1) S = buildSeed();
+function save(msg){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} if (msg) toast(msg); }
+let session = null;
+try { session = JSON.parse(sessionStorage.getItem('ohq_session') || 'null'); } catch(e){}
+function setSession(u){ session = u; try { u ? sessionStorage.setItem('ohq_session', JSON.stringify(u)) : sessionStorage.removeItem('ohq_session'); } catch(e){} }
+const isAdmin = () => session && (session.role === 'admin' || session.role === 'editor');
+
+/* ---------------- Utils ---------------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today = () => new Date().toISOString().slice(0,10);
+const uid = () => Math.random().toString(36).slice(2,9);
+function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800); }
+function fmtDate(d, opts={day:'numeric', month:'short'}){ if(!d) return ''; const [y,m,dd] = d.split('-').map(Number); return new Date(Date.UTC(y,m-1,dd)).toLocaleDateString('en-AU', {...opts, timeZone:'UTC'}); }
+function monthName(k, long){ const [y,m] = k.split('-').map(Number); return new Date(Date.UTC(y,m-1,1)).toLocaleDateString('en-AU',{month: long ? 'long' : 'short', timeZone:'UTC'}); }
+function money(v, cur, dp=0){ if (v == null || !isFinite(v)) return '—'; return new Intl.NumberFormat('en-US',{style:'currency',currency:cur,maximumFractionDigits:dp,minimumFractionDigits:dp}).format(v); }
+function num(v, dp=0){ if (v == null || !isFinite(v)) return '—'; return v.toLocaleString('en-AU',{maximumFractionDigits:dp,minimumFractionDigits:dp}); }
+function pct(v, dp=1){ if (v == null || !isFinite(v)) return '—'; return (v*100).toFixed(dp) + '%'; }
+function short(v){ const a = Math.abs(v); if (a >= 1e6) return (v/1e6).toFixed(1).replace(/\.0$/,'') + 'm'; if (a >= 1e3) return (v/1e3).toFixed(a >= 1e4 ? 0 : 1).replace(/\.0$/,'') + 'k'; return String(Math.round(v*10)/10); }
+function getPath(o, p){ return p.split('.').reduce((a,k) => a?.[k], o); }
+function setPath(o, p, v){ const ks = p.split('.'); const last = ks.pop(); const t = ks.reduce((a,k) => a[k], o); t[last] = v; }
+
+/* ---------------- Performance maths ---------------- */
+// Ratios are ALWAYS recalculated from totals. Never sum weekly CTR/CPC/CR.
+const P = () => S.perf;
+function weeksWithData(){
+  const W = P().weeks;
+  return W.map((w,i) => ({...w, i})).filter(w => MARKETS.some(m => CHANNELS.some(c => (P().markets[m.id]?.[c.id]?.spend?.[w.i] || 0) > 0)));
+}
+function clicksAt(s, i){
+  if (!s) return null;
+  if (s.clicks?.[i] != null) return s.clicks[i];
+  if (s.ctr?.[i] != null && s.impressions?.[i] != null) return Math.round(s.ctr[i] * s.impressions[i]); // derived
+  return null;
+}
+function weekRow(mid, cid, i){
+  const s = P().markets[mid]?.[cid]; if (!s) return null;
+  const spend = s.spend?.[i] ?? null, imps = s.impressions?.[i] ?? null, clicks = clicksAt(s,i), leads = s.leads?.[i] ?? null;
+  return {spend, imps, clicks, leads, derived: s.clicks?.[i] == null && clicks != null,
+    ctr: clicks != null && imps ? clicks/imps : null, cpc: clicks ? (spend ?? 0)/clicks : null,
+    cpl: leads ? (spend ?? 0)/leads : null, cvr: clicks && leads != null ? leads/clicks : null};
+}
+function agg(mid, cids, monthKey){
+  const W = weeksWithData().filter(w => w.month === monthKey);
+  let spend=0, imps=0, clicks=0, leads=0, n=W.length, clickWeeks=0;
+  for (const w of W) for (const cid of cids){
+    const r = weekRow(mid,cid,w.i); if (!r) continue;
+    spend += r.spend || 0; imps += r.imps || 0; leads += r.leads || 0;
+    if (r.clicks != null){ clicks += r.clicks; }
+  }
+  return {n, spend, imps, clicks, leads, spendW: n ? spend/n : null, leadsW: n ? leads/n : null,
+    cpl: leads ? spend/leads : null, ctr: imps ? clicks/imps : null, cpc: clicks ? spend/clicks : null, cvr: clicks ? leads/clicks : null};
+}
+function months(){ const ms = [...new Set(weeksWithData().map(w => w.month))]; return {cur: ms[ms.length-1], prev: ms[ms.length-2], all: ms}; }
+function liveChannels(mid){ return CHANNELS.filter(c => S.markets[mid].channels[c.id].status === 'live'); }
+function perfChannels(mid){ return CHANNELS.filter(c => P().markets[mid]?.[c.id]?.spend?.some(v => v > 0)); }
+function delta(cur, prev, lowerBetter, neutral){
+  if (cur == null || prev == null || !isFinite(cur) || !isFinite(prev) || prev === 0) return '<span class="delta flat">new</span>';
+  const d = (cur - prev) / prev;
+  if (Math.abs(d) < 0.03) return `<span class="delta flat">flat</span>`;
+  if (neutral) return `<span class="delta flat">${d > 0 ? '▲' : '▼'} ${Math.abs(d*100).toFixed(0)}%</span>`;
+  const good = lowerBetter ? d < 0 : d > 0;
+  return `<span class="delta ${good ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'} ${Math.abs(d*100).toFixed(0)}%</span>`;
+}
+function monthsNote(){
+  const {cur, prev} = months();
+  const nc = weeksWithData().filter(w => w.month === cur).length, np = weeksWithData().filter(w => w.month === prev).length;
+  return `${monthName(cur,true)} to date (${nc} wk${nc>1?'s':''}) vs ${monthName(prev,true)} (${np} wks), weekly averages`;
+}
+
+/* ---------------- Charts (inline SVG) ---------------- */
+function niceMax(v){ if (!(v > 0)) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); for (const m of [1,2,4,6,8,10]) if (m*p >= v) return m*p; return 10*p; }
+function chart({labels, bars=[], line=null, h=230, fmtL=short, fmtR=short, title='', w=720}){
+  const W = w, H = h, pl = 44, pr = line ? 46 : 12, pt = 14, pb = 30;
+  const pw = W - pl - pr, ph = H - pt - pb, n = labels.length, step = pw / n, bw = Math.min(46, step * 0.58);
+  const sums = labels.map((_,i) => bars.reduce((a,b) => a + (b.values[i] || 0), 0));
+  const maxY = niceMax(Math.max(...sums, 0));
+  const maxL = line ? niceMax(Math.max(...line.values.filter(v => v != null), 0)) : 1;
+  let g = '';
+  for (let k = 0; k <= 4; k++){
+    const y = pt + ph - ph * k/4;
+    g += `<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+    g += `<text x="${pl-8}" y="${y+4}" text-anchor="end">${fmtL(maxY*k/4)}</text>`;
+    if (line) g += `<text x="${W-pr+8}" y="${y+4}">${fmtR(maxL*k/4)}</text>`;
+  }
+  labels.forEach((lab,i) => {
+    const x = pl + step*i + (step-bw)/2; let yAcc = pt + ph;
+    bars.forEach(b => {
+      const v = b.values[i] || 0; if (!v) return;
+      const bh = ph * v / maxY; yAcc -= bh;
+      g += `<rect x="${x}" y="${yAcc}" width="${bw}" height="${Math.max(bh,0.5)}" fill="${b.hex}" rx="2"><title>${esc(lab)} · ${esc(b.name)}: ${esc(b.fmt ? b.fmt(v) : num(v,1))}</title></rect>`;
+    });
+    g += `<text x="${pl + step*i + step/2}" y="${H-10}" text-anchor="middle">${esc(lab)}</text>`;
+  });
+  if (line){
+    const pts = line.values.map((v,i) => v == null ? null : [pl + step*i + step/2, pt + ph - ph * v / maxL]);
+    let d = '', started = false;
+    pts.forEach(p => { if (!p){ started = false; return; } d += (started ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); started = true; });
+    g += `<path d="${d}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>`;
+    pts.forEach((p,i) => { if (p) g += `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"><title>${esc(labels[i])} · ${esc(line.name)}: ${esc(line.fmt ? line.fmt(line.values[i]) : num(line.values[i],1))}</title></circle>`; });
+  }
+  const legend = bars.map(b => `<span><i style="background:${b.hex}"></i>${esc(b.name)}</span>`).join('') + (line ? `<span><i class="ln" style="background:var(--ink)"></i>${esc(line.name)} (right axis)</span>` : '');
+  return `<div class="chart" role="img" aria-label="${esc(title)}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${g}</svg></div><div class="legend">${legend}</div>`;
+}
+function spark(values, w=120, h=34){
+  const v = values.map(x => x ?? 0), max = Math.max(...v, 1), n = v.length;
+  const pts = v.map((y,i) => `${(i*(w-4)/(n-1)+2).toFixed(1)},${(h-3 - (h-6)*y/max).toFixed(1)}`);
+  const last = pts[pts.length-1].split(',');
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><polyline points="${pts.join(' ')}" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/><circle cx="${last[0]}" cy="${last[1]}" r="3" fill="var(--gold)"/></svg>`;
+}
+const wkLabels = () => weeksWithData().map(w => fmtDate(w.date));
+
+/* ---------------- Shell ---------------- */
+function route(){ const h = (location.hash || '#/home').slice(2).split('/'); return {page:h[0] || 'home', a:h[1], b:h[2]}; }
+function nav(r){
+  const on = (cond) => cond ? 'on' : '';
+  return `
+  <aside class="side" id="side">
+    <div class="brand"><div class="mark"><span></span></div><div><b>OfficeHQ</b><small>Media portal · by Sunny</small></div></div>
+    <nav class="nav">
+      <a href="#/home" class="${on(r.page==='home')}">${ICON.home}Overview</a>
+      <div class="nav-label">Markets</div>
+      ${MARKETS.map(m => `<a href="#/market/${m.id}" class="${on(r.page==='market' && r.a===m.id)}"><span class="code">${m.code}</span>${esc(m.name)}</a>`).join('')}
+      <div class="nav-label">Working together</div>
+      <a href="#/creative" class="${on(r.page==='creative')}">${ICON.creative}Creative tracker</a>
+      <a href="#/team" class="${on(r.page==='team')}">${ICON.team}Who's who</a>
+      ${isAdmin() ? `<div class="nav-label">Sunny only</div><a href="#/admin" class="${on(r.page==='admin')}">${ICON.admin}Admin</a>` : ''}
+    </nav>
+    <div class="side-foot">
+      <div class="who"><div class="avatar">${esc(initials(session.name))}</div><div><b>${esc(session.name)}</b><small>${esc(session.org)} · ${session.role === 'admin' ? 'Admin' : session.role === 'editor' ? 'Editor' : 'Viewer'}</small></div></div>
+      <div class="row" style="margin-top:12px;gap:14px"><button class="linkbtn" data-act="logout">Sign out</button><button class="linkbtn" data-act="theme">Toggle theme</button></div>
+    </div>
+  </aside>`;
+}
+const initials = n => (n || '?').split(/\s+/).map(x => x[0]).slice(0,2).join('').toUpperCase();
+
+function render(){
+  const root = $('#root');
+  if (!session){ root.innerHTML = loginView(); return; }
+  const r = route();
+  let body;
+  if (r.page === 'market' && MARKETS.find(m => m.id === r.a)) body = marketView(r.a, r.b);
+  else if (r.page === 'creative') body = creativeView();
+  else if (r.page === 'team') body = teamView();
+  else if (r.page === 'admin' && isAdmin()) body = adminView(r.a || 'links', r.b);
+  else body = homeView();
+  root.innerHTML = `<div class="app">${nav(r)}<div style="min-width:0"><div class="topbar"><button data-act="menu" aria-label="Open menu">${ICON.menu}</button><b style="font-weight:700">OfficeHQ media portal</b></div><main id="main">${body}<p class="proto">Prototype · data saves to this browser only · performance from ${esc(S.perfSource)} (updated ${fmtDate(S.updated.performance,{day:'numeric',month:'short',year:'numeric'})})</p></main></div></div>`;
+  window.scrollTo(0,0);
+  if (r.page === 'team') tickClocks();
+}
+
+/* ---------------- Login ---------------- */
+function loginView(){
+  return `<div class="login">
+    <div class="login-l">
+      <div class="brand" style="padding:0"><div class="mark"><span></span></div><div><b style="color:#fff">Sunny Advertising</b><small style="color:#9A9A9A">for OfficeHQ & ReceptionHQ</small></div></div>
+      <div style="position:relative;z-index:1">
+        <h1>Your media, <span style="color:var(--gold)">in full view.</span></h1>
+        <p>Every market, every channel. What's live, who it's reaching, how it's performing and who to call.</p>
+      </div>
+      <p style="font-size:12px;color:#6E6E6E;position:relative;z-index:1">Access is invite only.</p>
+      <svg class="wave" viewBox="0 0 600 220" aria-hidden="true"><path d="M0 150 Q150 60 300 130 T600 90 V220 H0Z" fill="#FDB600" opacity=".08"/><path d="M0 180 Q150 100 300 165 T600 130 V220 H0Z" fill="#FDB600" opacity=".16"/></svg>
+    </div>
+    <div class="login-r">
+      <form class="login-form" data-form="login" novalidate>
+        <h2>Sign in</h2>
+        <p class="sub" style="margin-bottom:22px">Use the email your invite was sent to.</p>
+        <div class="stack" style="gap:14px">
+          <label class="f">Email<input class="inp" name="email" type="email" autocomplete="username" required></label>
+          <label class="f">Password<input class="inp" name="password" type="password" autocomplete="current-password" required></label>
+          <div class="err" id="loginErr"></div>
+          <button class="btn gold" type="submit" style="justify-content:center">Sign in</button>
+        </div>
+        <div class="demo">Prototype accounts (password <b style="color:var(--ink)">preview</b>):
+          ${S.users.map(u => `<button type="button" data-act="demo" data-email="${esc(u.email)}"><b>${esc(u.name)}</b> · ${u.role === 'viewer' ? 'client view' : 'admin view'}<br><span>${esc(u.email)}</span></button>`).join('')}
+        </div>
+      </form>
+    </div>
+  </div>`;
+}
+
+/* ---------------- Overview ---------------- */
+function homeView(){
+  const W = weeksWithData(), labels = wkLabels(), {cur, prev} = months();
+  const leadsBy = cid => W.map(w => MARKETS.reduce((a,m) => a + (P().markets[m.id]?.[cid]?.leads?.[w.i] || 0), 0));
+  const series = CHANNELS.filter(c => MARKETS.some(m => P().markets[m.id]?.[c.id]?.leads?.some(v => v > 0)))
+    .map(c => ({name:c.name, hex:c.hex, values:leadsBy(c.id), fmt:v => num(v,1)}));
+  const totals = labels.map((_,i) => series.reduce((a,s) => a + s.values[i], 0));
+  const lastW = W[W.length-1], lastTotal = totals[totals.length-1];
+  const allC = CHANNELS.map(c => c.id);
+  const mSum = (mk, key, cids=allC) => MARKETS.reduce((a,m) => a + agg(m.id, cids, mk)[key], 0);
+  const nCur = W.filter(w => w.month === cur).length, nPrev = W.filter(w => w.month === prev).length;
+  const leadsWCur = mSum(cur,'leads')/nCur, leadsWPrev = mSum(prev,'leads')/nPrev;
+  const metaShare = mk => { const t = mSum(mk,'leads'); return t ? mSum(mk,'leads',['meta'])/t : null; };
+  const top = S.perf.topline || {};
+  const bud = top['Monthly Marketing Budget (AUD)'] || {}, spd = top['Monthly Marketing Spend (AUD)'] || {};
+  const liveCount = MARKETS.reduce((a,m) => a + liveChannels(m.id).length, 0);
+
+  return `
+  <div class="page-head">
+    <div><h1>Good ${greeting()}, ${esc(firstName(session.name))}</h1><p class="sub">Paid media across OfficeHQ and ReceptionHQ, as of the week of ${fmtDate(lastW.date,{day:'numeric',month:'long'})}.</p></div>
+    <div class="meta">${liveCount} live channel${liveCount===1?'':'s'} across ${MARKETS.length} markets</div>
+  </div>
+
+  <section class="panel" style="margin-bottom:16px;padding:18px 22px">
+    <div class="panel-head" style="margin-bottom:12px"><h2>Quick links</h2>${isAdmin() ? '<a class="linkbtn" href="#/admin/links">Edit links</a>' : `<span class="meta">Updated ${fmtDate(S.updated.links)}</span>`}</div>
+    <div class="qlinks">${S.links.map(linkTile).join('')}</div>
+  </section>
+
+  <section class="hero">
+    <div class="hero-l">
+      <div class="meta">Paid leads, week of ${fmtDate(lastW.date,{day:'numeric',month:'short'})}</div>
+      <div class="hero-big num">${num(lastTotal,0)}<span class="unit">leads</span></div>
+      <div class="meta">across AU, NZ, UK and US</div>
+      <div class="rule"></div>
+      <dl class="kv">
+        <dt>Leads per week, ${monthName(cur)}</dt><dd class="num">${num(leadsWCur,1)} ${delta(leadsWCur, leadsWPrev)}</dd>
+        <dt>Leads per week, ${monthName(prev)}</dt><dd class="num">${num(leadsWPrev,1)}</dd>
+        <dt>Meta share of leads</dt><dd class="num">${pct(metaShare(prev),0)} → ${pct(metaShare(cur),0)}</dd>
+      </dl>
+    </div>
+    <div class="hero-r">
+      <div class="panel-head" style="margin-bottom:6px"><h2>Weekly paid leads by channel</h2><span class="meta">Leads can be added across markets; spend can't, so it lives on each market page.</span></div>
+      ${chart({labels, bars:series, h:250, title:'Weekly paid leads by channel, all markets'})}
+    </div>
+  </section>
+
+  <div class="panel-head mt2"><h2>Markets</h2><span class="meta">${esc(monthsNote())}</span></div>
+  <div class="grid g4">${MARKETS.map(m => marketCard(m, cur, prev)).join('')}</div>
+
+  <div class="split mt2">
+    <div class="stack">
+      <section class="panel">
+        <div class="panel-head"><h2>Month-on-month by channel</h2><span class="meta">Weekly averages, local currency</span></div>
+        ${momTable(cur, prev)}
+      </section>
+    </div>
+    <div class="stack">
+      <section class="panel">
+        <div class="panel-head"><h2>What's changed</h2>${isAdmin() ? '<a class="linkbtn" href="#/admin/changes">Add update</a>' : ''}</div>
+        ${feedHTML(S.changes.slice().sort((a,b) => b.date.localeCompare(a.date)).slice(0,6))}
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Budget pacing</h2><span class="meta">All businesses, AUD</span></div>
+        ${pacingHTML(bud, spd)}
+      </section>
+    </div>
+  </div>`;
+}
+const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'; };
+const firstName = n => (n || '').split(' ')[0] || 'there';
+
+function marketCard(m, cur, prev){
+  const cids = CHANNELS.map(c => c.id), a = agg(m.id, cids, cur), b = agg(m.id, cids, prev);
+  const W = weeksWithData(), wkLeads = W.map(w => CHANNELS.reduce((s,c) => s + (P().markets[m.id]?.[c.id]?.leads?.[w.i] || 0), 0));
+  const live = liveChannels(m.id);
+  return `<a class="mcard" href="#/market/${m.id}">
+    <div class="mcard-top"><div><div class="mcode">${m.code}</div><div class="mname">${esc(m.name)} · ${m.currency}</div></div>${spark(wkLeads)}</div>
+    <div class="mstats">
+      <div class="mstat"><small>Leads / week</small><b class="num">${num(a.leadsW,1)}</b><br>${delta(a.leadsW, b.leadsW)}</div>
+      <div class="mstat"><small>Cost per lead</small><b class="num">${money(a.cpl, m.currency)}</b><br>${delta(a.cpl, b.cpl, true)}</div>
+    </div>
+    <div class="chips">${live.length ? live.map(c => `<span class="chip live">${esc(c.name)}</span>`).join('') : '<span class="chip">No live channels</span>'}</div>
+  </a>`;
+}
+function linkTile(l){
+  const inner = `<div class="ic">${ICON[l.icon] || ICON.link}</div><div><b>${esc(l.label)}</b><small>${l.url ? esc(l.desc) : 'Link not added yet'}</small></div>`;
+  return l.url ? `<a class="qlink" href="${esc(l.url)}" target="_blank" rel="noopener">${inner}</a>` : `<div class="qlink unset">${inner}</div>`;
+}
+function momTable(cur, prev){
+  let rows = '';
+  for (const m of MARKETS) for (const c of perfChannels(m.id)){
+    const a = agg(m.id,[c.id],cur), b = agg(m.id,[c.id],prev);
+    rows += `<tr><td><b style="font-weight:700">${m.code}</b> ${esc(c.name)}</td>
+      <td class="r num">${money(a.spendW,m.currency)} ${delta(a.spendW,b.spendW,false,true)}</td>
+      <td class="r num">${num(a.leadsW,1)} ${delta(a.leadsW,b.leadsW)}</td>
+      <td class="r num">${money(a.cpl,m.currency)} ${delta(a.cpl,b.cpl,true)}</td></tr>`;
+  }
+  return `<div class="tbl-wrap"><table><thead><tr><th>Market & channel</th><th class="r">Spend / wk</th><th class="r">Leads / wk</th><th class="r">Cost per lead</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="meta" style="margin:10px 0 0">${esc(monthsNote())}. Green means better: more leads or a lower cost per lead. Spend changes are shown in grey.</p>`;
+}
+function feedHTML(items){
+  if (!items.length) return `<div class="emptybox"><b>No updates yet</b>Changes to creative, budgets and targeting will show here.</div>`;
+  return `<ul class="feed">${items.map(c => `<li><div class="d">${fmtDate(c.date)}</div><div><div class="t">${esc(c.text)}</div><div class="tags"><span class="chip">${esc(c.type)}</span><span class="chip">${c.market === 'all' ? 'All markets' : esc(MARKETS.find(m => m.id === c.market)?.code || '')}</span>${c.channel && c.channel !== 'all' ? `<span class="chip">${esc(CHANNELS.find(x => x.id === c.channel)?.name || '')}</span>` : ''}</div></div></li>`).join('')}</ul>`;
+}
+function pacingHTML(bud, spd){
+  const ms = Object.keys(bud).sort();
+  return ms.map(mk => {
+    const b = bud[mk] || 0, s = spd[mk] || 0;
+    if (!b && !s) return `<div style="padding:10px 0;border-top:1px solid var(--line)" class="row"><b style="width:44px;font-weight:600">${monthName(mk)}</b><span class="meta">Not entered in the media report yet</span></div>`;
+    const p = b ? s/b : null;
+    return `<div style="padding:10px 0 12px">
+      <div class="row" style="justify-content:space-between"><b style="font-weight:600">${monthName(mk,true)}</b><span class="num"><b style="font-weight:700">${money(s,'AUD')}</b> <span class="meta">of ${money(b,'AUD')}</span></span></div>
+      <div style="height:10px;border-radius:5px;background:var(--bg);border:1px solid var(--line);margin-top:8px;overflow:hidden"><div style="height:100%;width:${Math.min(100,(p||0)*100)}%;background:var(--gold)"></div></div>
+      <div class="meta" style="margin-top:6px">${pct(p,0)} of budget spent</div></div>`;
+  }).join('') + `<p class="meta" style="margin:4px 0 0">Covers OHQ, RHQ ×3, ANS & LexHelper.</p>`;
+}
+
+/* ---------------- Market ---------------- */
+function marketView(mid, chId){
+  const m = MARKETS.find(x => x.id === mid), md = S.markets[mid], {cur, prev} = months();
+  const ordered = [...CHANNELS].sort((a,b) => (md.channels[a.id].status === 'live' ? 0 : 1) - (md.channels[b.id].status === 'live' ? 0 : 1));
+  const active = chId && CHANNELS.find(c => c.id === chId) ? chId : (ordered[0]?.id);
+  const cids = CHANNELS.map(c => c.id), a = agg(mid,cids,cur), b = agg(mid,cids,prev);
+  const W = weeksWithData(), pc = perfChannels(mid);
+  const spendBars = pc.map(c => ({name:c.name, hex:c.hex, values:W.map(w => P().markets[mid][c.id].spend[w.i] || 0), fmt:v => money(v,m.currency)}));
+  const leadsLine = {name:'Leads', values:W.map(w => pc.reduce((s,c) => s + (P().markets[mid][c.id].leads[w.i] || 0), 0)), fmt:v => num(v,1)};
+  const best = pc.map(c => ({name:c.name, cpl:agg(mid,[c.id],cur).cpl})).filter(x => x.cpl).sort((x,y) => x.cpl - y.cpl)[0];
+  const localTime = new Intl.DateTimeFormat('en-AU',{timeZone:m.tz,hour:'numeric',minute:'2-digit',weekday:'short'}).format(new Date());
+
+  return `
+  <div class="page-head">
+    <div><div class="meta">${esc(m.country)} · ${m.currency} · ${esc(m.tzLabel)} time ${esc(localTime)}</div><h1 style="margin-top:4px">${esc(m.name)}</h1></div>
+    ${isAdmin() ? `<a class="btn ghost" href="#/admin/channels/${mid}">Edit ${m.code} setup</a>` : ''}
+  </div>
+  ${md.note ? `<div class="note" style="margin-bottom:16px">${ICON.warn}<div><b>Tracking note.</b> ${esc(md.note)}</div></div>` : ''}
+
+  <div class="kpis">
+    <div class="kpi"><small>Spend / week</small><b class="num">${money(a.spendW,m.currency)}</b>${delta(a.spendW,b.spendW,false,true)}</div>
+    <div class="kpi"><small>Leads / week</small><b class="num">${num(a.leadsW,1)}</b>${delta(a.leadsW,b.leadsW)}</div>
+    <div class="kpi"><small>Cost per lead</small><b class="num">${money(a.cpl,m.currency)}</b>${delta(a.cpl,b.cpl,true)}</div>
+    <div class="kpi"><small>Lowest cost per lead</small><b class="num">${best ? money(best.cpl,m.currency) : '—'}</b><span class="meta">${best ? esc(best.name) : 'No leads yet'}</span></div>
+    <div class="kpi"><small>Live channels</small><b class="num">${liveChannels(mid).length}</b><span class="meta">${esc(liveChannels(mid).map(c => c.name).join(', ') || 'None')}</span></div>
+  </div>
+  <p class="meta" style="margin:8px 0 0">${esc(monthsNote())}</p>
+
+  <div class="split mt">
+    <section class="panel">
+      <div class="panel-head"><h2>Weekly spend and leads</h2><span class="meta">${m.currency}</span></div>
+      ${pc.length ? chart({labels:wkLabels(), bars:spendBars, line:leadsLine, h:240, fmtL:v => short(v), title:`${m.name} weekly spend and leads`}) : '<div class="emptybox"><b>No spend recorded yet</b>Upload the latest media report in Admin.</div>'}
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>From the team</h2></div>
+      ${md.commentary ? `<p style="margin:0;white-space:pre-wrap">${esc(md.commentary)}</p>` : `<div class="emptybox"><b>Commentary coming</b>Your account team adds a short read on ${m.code} performance each month.</div>`}
+      <h3 class="mt2" style="margin-bottom:8px">Recent changes</h3>
+      ${feedHTML(S.changes.filter(c => c.market === mid || c.market === 'all').sort((a,b) => b.date.localeCompare(a.date)).slice(0,4))}
+    </section>
+  </div>
+
+  <div class="tabs mt2" role="tablist">
+    ${ordered.map(c => { const st = md.channels[c.id].status; return `<a role="tab" aria-selected="${c.id===active}" class="tab ${c.id===active?'on':''} ${st==='live'?'':'dim'}" href="#/market/${mid}/${c.id}"><span class="dot ${st==='live'?'live':''}"></span>${esc(c.name)}</a>`; }).join('')}
+  </div>
+  ${channelPanel(m, active)}`;
+}
+
+function channelPanel(m, cid){
+  const c = CHANNELS.find(x => x.id === cid), ch = S.markets[m.id].channels[cid], {cur, prev} = months();
+  const W = weeksWithData(), hasPerf = P().markets[m.id]?.[cid]?.spend?.some(v => v > 0);
+  const rows = W.map(w => ({w, r:weekRow(m.id,cid,w.i)}));
+  const a = agg(m.id,[cid],cur), b = agg(m.id,[cid],prev);
+  const t = ch.targeting, filled = TARGETING_FIELDS.filter(([k]) => t[k]);
+  const statusLine = `<span class="badge st-${ch.status}">${STATUS[ch.status]}</span>`;
+  const wag = ch.whatagraph ? `<a class="btn ghost sm" href="${esc(ch.whatagraph)}" target="_blank" rel="noopener">Open in Whatagraph ${ICON.ext}</a>` : `<span class="meta">Whatagraph link not added</span>`;
+
+  if (ch.status !== 'live' && !hasPerf && !filled.length && !ch.creatives.length){
+    return `<section class="panel"><div class="panel-head"><h2>${esc(c.name)} in ${m.code}</h2>${statusLine}</div>
+      <div class="emptybox"><b>${ch.status === 'awaiting' ? 'Tracking for this channel is being set up' : ch.status === 'planned' ? 'Planned, not running yet' : 'Not running in this market'}</b>${ch.notes ? esc(ch.notes) : 'Targeting, creative and results will appear here once it goes live.'}</div></section>`;
+  }
+  return `
+  <div class="row" style="justify-content:space-between;margin-bottom:14px"><div class="row"><h2>${esc(c.name)} in ${m.code}</h2>${statusLine}</div>${wag}</div>
+  ${ch.notes ? `<p class="sub" style="margin:-4px 0 16px">${esc(ch.notes)}</p>` : ''}
+  ${ch.whatagraph && ch.embed ? `<section class="panel" style="padding:0;overflow:hidden;margin-bottom:16px"><iframe src="${esc(ch.whatagraph)}" title="Whatagraph report" style="width:100%;height:560px;border:0;display:block"></iframe></section>` : ''}
+  ${hasPerf ? `
+  <div class="grid g4">
+    <div class="panel" style="padding:16px"><small class="meta">Spend / week</small><div style="font-size:21px;font-weight:700" class="num">${money(a.spendW,m.currency)}</div>${delta(a.spendW,b.spendW,false,true)}</div>
+    <div class="panel" style="padding:16px"><small class="meta">Leads / week</small><div style="font-size:21px;font-weight:700" class="num">${num(a.leadsW,1)}</div>${delta(a.leadsW,b.leadsW)}</div>
+    <div class="panel" style="padding:16px"><small class="meta">Cost per lead</small><div style="font-size:21px;font-weight:700" class="num">${money(a.cpl,m.currency)}</div>${delta(a.cpl,b.cpl,true)}</div>
+    <div class="panel" style="padding:16px"><small class="meta">Cost per click</small><div style="font-size:21px;font-weight:700" class="num">${money(a.cpc,m.currency,2)}</div>${delta(a.cpc,b.cpc,true)}</div>
+  </div>
+  <div class="grid g2 mt">
+    <section class="panel"><div class="panel-head"><h3>Clicks and leads</h3></div>${chart({labels:wkLabels(), bars:[{name:'Clicks', hex:c.hex === '#E0E0E0' ? '#C2C2C2' : c.hex, values:rows.map(x => x.r?.clicks || 0), fmt:v => num(v)}], line:{name:'Leads', values:rows.map(x => x.r?.leads), fmt:v => num(v,1)}, h:250, w:440, title:'Clicks and leads'})}</section>
+    <section class="panel"><div class="panel-head"><h3>Cost per click and cost per lead</h3><span class="meta">${m.currency}</span></div>${chart({labels:wkLabels(), bars:[{name:'Cost per click', hex:'#C2C2C2', values:rows.map(x => x.r?.cpc || 0), fmt:v => money(v,m.currency,2)}], line:{name:'Cost per lead', values:rows.map(x => x.r?.cpl ?? null), fmt:v => money(v,m.currency)}, h:250, w:440, fmtL:v => short(v), title:'Cost per click and lead'})}</section>
+  </div>
+  <section class="panel mt"><div class="panel-head"><h3>Week by week</h3><span class="meta">Ratios recalculated from totals</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Week of</th><th class="r">Spend</th><th class="r">Impressions</th><th class="r">Clicks</th><th class="r">CTR</th><th class="r">CPC</th><th class="r">Leads</th><th class="r">CPL</th><th class="r">Click → lead</th></tr></thead><tbody>
+    ${rows.map(({w,r}) => `<tr><td>${fmtDate(w.date)}</td><td class="r num">${money(r?.spend,m.currency)}</td><td class="r num">${num(r?.imps)}</td><td class="r num">${num(r?.clicks)}${r?.derived ? '<sup title="Estimated from CTR × impressions; clicks cell was blank">*</sup>' : ''}</td><td class="r num">${pct(r?.ctr)}</td><td class="r num">${money(r?.cpc,m.currency,2)}</td><td class="r num">${num(r?.leads,1)}</td><td class="r num">${money(r?.cpl,m.currency)}</td><td class="r num">${pct(r?.cvr)}</td></tr>`).join('')}
+    </tbody></table></div>
+    ${rows.some(x => x.r?.derived) ? '<p class="meta" style="margin:8px 0 0">* Clicks estimated from CTR × impressions where the weekly clicks figure wasn\'t entered.</p>' : ''}
+  </section>` : `<div class="emptybox">No results in the media report for this channel yet.</div>`}
+
+  <div class="grid g2 mt">
+    <section class="panel"><div class="panel-head"><h2>Targeting</h2></div>
+      ${filled.length ? `<dl class="dl">${TARGETING_FIELDS.map(([k,l]) => `<dt>${l}</dt><dd>${t[k] ? esc(t[k]) : '<span class="nodata">—</span>'}</dd>`).join('')}</dl>` : `<div class="emptybox"><b>Targeting summary coming</b>Audiences, locations, keywords and bidding will be listed here.</div>`}
+    </section>
+    <section class="panel"><div class="panel-head"><h2>Live creative & messaging</h2><span class="meta">${ch.creatives.length} item${ch.creatives.length===1?'':'s'}</span></div>
+      ${ch.creatives.length ? `<div class="creative">${ch.creatives.map(cr => `<div class="cr"><div class="stage">${esc(cr.stage || 'Funnel stage not set')}${cr.vertical ? ' · ' + esc(cr.vertical) : ''}</div><h3>${esc(cr.name || 'Untitled')}</h3><p>${esc(cr.message)}</p><div class="row" style="margin-top:10px;justify-content:space-between"><span class="badge st-${cr.status === 'Live' ? 'live' : cr.status === 'Paused' ? 'paused' : 'planned'}">${esc(cr.status || 'Live')}</span>${cr.asset ? `<a class="linkbtn" href="${esc(cr.asset)}" target="_blank" rel="noopener">View asset</a>` : ''}</div>${cr.cta ? `<p class="meta" style="margin-top:8px">CTA: ${esc(cr.cta)}</p>` : ''}</div>`).join('')}</div>` : `<div class="emptybox"><b>Creative coming</b>Live ads and key messages for this channel will be shown here.</div>`}
+    </section>
+  </div>`;
+}
+
+/* ---------------- Creative tracker ---------------- */
+function creativeView(){
+  const filled = S.tracker.some(r => VERTICALS.some(v => r[v]) || r.cta);
+  const approvalBadge = s => `<span class="badge ${s === 'Approved' ? 'st-live' : s === 'Changes requested' ? 'st-paused' : s === 'Awaiting approval' ? 'st-planned' : 'st-not_live'}">${esc(s)}</span>`;
+  return `
+  <div class="page-head"><div><h1>Creative tracker</h1><p class="sub">Messaging by funnel stage and vertical, with approval and live status. Approve anything waiting on you directly from here.</p></div>
+  ${isAdmin() ? '<a class="btn ghost" href="#/admin/tracker">Edit tracker</a>' : `<span class="meta">Updated ${fmtDate(S.updated.creative)}</span>`}</div>
+  ${!filled ? `<div class="emptybox" style="margin-bottom:16px"><b>Messaging is being loaded in</b>The structure below matches your tracker. Copy for each stage and vertical will appear as it's written.</div>` : ''}
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Funnel stage</th>${VERTICALS.map(v => `<th>${v}</th>`).join('')}<th>CTA</th><th>Asset</th><th>Shared</th><th>Approval</th><th>Live</th></tr></thead>
+    <tbody>${S.tracker.map((r,i) => `<tr>
+      <td><b style="font-weight:600">${esc(r.stage)}</b></td>
+      ${VERTICALS.map(v => `<td style="min-width:150px">${r[v] ? esc(r[v]) : '<span class="empty-cell">—</span>'}</td>`).join('')}
+      <td>${r.cta ? esc(r.cta) : '<span class="empty-cell">—</span>'}</td>
+      <td>${r.asset ? `<a class="linkbtn" href="${esc(r.asset)}" target="_blank" rel="noopener">Open</a>` : '<span class="empty-cell">—</span>'}${r.url ? `<br><a class="linkbtn" href="${esc(r.url)}" target="_blank" rel="noopener">Landing page</a>` : ''}</td>
+      <td>${esc(r.shared)}</td>
+      <td>${approvalBadge(r.approval)}${r.feedback && r.approval === 'Changes requested' ? `<div class="meta" style="margin-top:6px;max-width:220px">${esc(r.feedback)}</div>` : ''}${!isAdmin() && r.approval === 'Awaiting approval' ? `<div class="row" style="margin-top:8px;gap:6px"><button class="btn gold sm" data-act="approve" data-i="${i}">Approve</button><button class="btn ghost sm" data-act="changes" data-i="${i}">Request changes</button></div>` : ''}</td>
+      <td><span class="badge ${r.live === 'Live' ? 'st-live' : r.live === 'Scheduled' ? 'st-planned' : 'st-not_live'}">${esc(r.live)}</span></td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+
+/* ---------------- Team ---------------- */
+function teamView(){
+  const zones = [{label:'Sunny · Sunshine Coast', tz:'Australia/Brisbane'}, ...MARKETS.map(m => ({label:`${m.code} · ${m.tzLabel}`, tz:m.tz}))];
+  return `
+  <div class="page-head"><div><h1>Who's who</h1><p class="sub">Your Sunny account team, what each person looks after, and how to reach them.</p></div>${isAdmin() ? '<a class="btn ghost" href="#/admin/team">Edit team</a>' : ''}</div>
+  <div class="clocks" id="clocks">${zones.map(z => `<div class="clock" data-tz="${z.tz}"><small>${esc(z.label)}</small><b class="num">--:--</b><span></span></div>`).join('')}</div>
+  <p class="meta" style="margin:8px 0 22px">${esc(S.hours || "")}</p>
+  <div class="grid g2">${S.team.map(p => {
+    const ph = !p.name;
+    return `<div class="person ${ph ? 'placeholder' : ''}"><div class="avatar">${ph ? '+' : esc(initials(p.name))}</div><div>
+      <h3>${ph ? 'To be confirmed' : esc(p.name)}${p.escalation ? ' <span class="chip" style="margin-left:6px">Escalation contact</span>' : ''}</h3>
+      <div class="role">${esc(p.role)}${p.focus ? ' · ' + esc(p.focus) : ''}</div>
+      <div class="contact">${p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : ''}${p.phone ? `<a href="tel:${esc(p.phone.replace(/\s/g,''))}">${esc(p.phone)}</a>` : ''}${!p.email && !p.phone ? '<span class="meta">Contact details to be added</span>' : ''}</div>
+    </div></div>`; }).join('')}</div>`;
+}
+function tickClocks(){
+  const upd = () => document.querySelectorAll('.clock').forEach(el => {
+    const tz = el.dataset.tz, now = new Date();
+    el.querySelector('b').textContent = new Intl.DateTimeFormat('en-AU',{timeZone:tz,hour:'numeric',minute:'2-digit'}).format(now);
+    el.querySelector('span').textContent = new Intl.DateTimeFormat('en-AU',{timeZone:tz,weekday:'long'}).format(now);
+    if (tz === 'Australia/Brisbane'){
+      const parts = new Intl.DateTimeFormat('en-AU',{timeZone:tz,hour:'numeric',minute:'numeric',weekday:'short',hour12:false}).formatToParts(now);
+      const h = +parts.find(p => p.type==='hour').value, mi = +parts.find(p => p.type==='minute').value, wd = parts.find(p => p.type==='weekday').value;
+      const on = !['Sat','Sun'].includes(wd) && (h*60+mi) >= 510 && (h*60+mi) < 1020;
+      el.querySelector('span').textContent = on ? 'Online now' : 'Outside hours';
+    }
+  });
+  upd(); clearInterval(tickClocks._i); tickClocks._i = setInterval(() => { if (!document.getElementById('clocks')) return clearInterval(tickClocks._i); upd(); }, 30000);
+}
+
+/* ---------------- Admin ---------------- */
+const ADMIN_TABS = [['links','Quick links'],['channels','Channels & targeting'],['changes','What\'s changed'],['commentary','Commentary & notes'],['data','Performance data'],['tracker','Creative tracker'],['team','Who\'s who'],['users','Users']];
+function adminView(tab, sub){
+  const body = {links:adminLinks, channels:() => adminChannels(sub), changes:adminChanges, commentary:adminCommentary, data:adminData, tracker:adminTracker, team:adminTeam, users:adminUsers}[tab] || adminLinks;
+  return `<div class="page-head"><div><h1>Admin</h1><p class="sub">Only Sunny admins and editors can see this. Edits save as you go and appear to the client straight away.</p></div></div>
+  <div class="admin-nav">${ADMIN_TABS.map(([k,l]) => `<a class="pill ${k===tab?'on':''}" href="#/admin/${k}">${l}</a>`).join('')}</div>${body()}`;
+}
+const inp = (path, val, ph='', type='text') => `<input class="inp" type="${type}" data-path="${path}" value="${esc(val)}" placeholder="${esc(ph)}">`;
+const area = (path, val, ph='') => `<textarea class="inp" data-path="${path}" placeholder="${esc(ph)}">${esc(val)}</textarea>`;
+const sel = (path, val, opts) => `<select class="inp" data-path="${path}">${opts.map(o => { const [v,l] = Array.isArray(o) ? o : [o,o]; return `<option value="${esc(v)}" ${v===val?'selected':''}>${esc(l)}</option>`; }).join('')}</select>`;
+
+function adminLinks(){
+  return `<section class="panel"><div class="panel-head"><h2>Quick links</h2><button class="btn sm" data-act="addLink">Add link</button></div>
+  ${S.links.map((l,i) => `<div class="edit-row">${inp(`links.${i}.label`, l.label, 'Label')}${inp(`links.${i}.url`, l.url, 'https://…', 'url')}${inp(`links.${i}.desc`, l.desc, 'Short description')}<button class="btn danger sm" data-act="delLink" data-i="${i}">Remove</button></div>`).join('')}
+  </section>`;
+}
+function adminChannels(sub){
+  const [mid, cid] = (sub || 'au').split(':'), m = MARKETS.find(x => x.id === mid) || MARKETS[0];
+  const c = CHANNELS.find(x => x.id === cid) || CHANNELS[0], base = `markets.${m.id}.channels.${c.id}`, ch = S.markets[m.id].channels[c.id];
+  return `<section class="panel">
+    <div class="row" style="margin-bottom:18px">${MARKETS.map(x => `<a class="pill ${x.id===m.id?'on':''}" href="#/admin/channels/${x.id}:${c.id}">${x.code}</a>`).join('')}<span style="width:12px"></span>${CHANNELS.map(x => `<a class="pill ${x.id===c.id?'on':''}" href="#/admin/channels/${m.id}:${x.id}">${x.name}</a>`).join('')}</div>
+    <div class="fgrid">
+      <label class="f">Status${sel(base+'.status', ch.status, Object.entries(STATUS))}</label>
+      <label class="f">Whatagraph report link${inp(base+'.whatagraph', ch.whatagraph, 'https://app.whatagraph.com/…', 'url')}</label>
+      <label class="f full"><span class="row" style="gap:8px"><input type="checkbox" data-path="${base}.embed" ${ch.embed?'checked':''}> Try showing the Whatagraph report inside the page (only works if the share link allows embedding)</span></label>
+      <label class="f full">Channel note shown to client${area(base+'.notes', ch.notes, 'e.g. Launching 14 Oct pending creative approval')}</label>
+    </div>
+    <h3 class="mt2" style="margin-bottom:10px">Targeting</h3>
+    <div class="fgrid">${TARGETING_FIELDS.map(([k,l]) => `<label class="f">${l}${area(`${base}.targeting.${k}`, ch.targeting[k])}</label>`).join('')}</div>
+    <div class="row mt2" style="justify-content:space-between;margin-bottom:10px"><h3>Live creative & messaging</h3><button class="btn sm" data-act="addCreative" data-base="${base}">Add creative</button></div>
+    <div class="stack" style="gap:10px">${ch.creatives.length ? ch.creatives.map((cr,i) => `<div class="crow">
+      <label class="f half">Name${inp(`${base}.creatives.${i}.name`, cr.name, 'e.g. "Never miss a call" static')}</label>
+      <label class="f">Funnel stage${sel(`${base}.creatives.${i}.stage`, cr.stage, ['',...FUNNEL])}</label>
+      <label class="f">Vertical${sel(`${base}.creatives.${i}.vertical`, cr.vertical, ['',...VERTICALS])}</label>
+      <label class="f full">Message${area(`${base}.creatives.${i}.message`, cr.message)}</label>
+      <label class="f">CTA${inp(`${base}.creatives.${i}.cta`, cr.cta)}</label>
+      <label class="f">Asset link${inp(`${base}.creatives.${i}.asset`, cr.asset, 'https://…', 'url')}</label>
+      <label class="f">Status${sel(`${base}.creatives.${i}.status`, cr.status, ['Live','Scheduled','Paused'])}</label>
+      <div class="row" style="align-items:flex-end"><button class="btn danger sm" data-act="delCreative" data-base="${base}" data-i="${i}">Remove</button></div>
+    </div>`).join('') : '<div class="emptybox">No creative added for this channel yet.</div>'}</div>
+    <div class="row mt2"><a class="btn ghost" href="#/market/${m.id}/${c.id}">Preview client view</a><a class="btn gold" href="#/admin/changes">Log this change in What's changed</a></div>
+  </section>`;
+}
+function adminChanges(){
+  return `<div class="split"><section class="panel"><div class="panel-head"><h2>Updates</h2></div>
+    ${S.changes.length ? `<div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Update</th><th></th></tr></thead><tbody>${S.changes.slice().sort((a,b) => b.date.localeCompare(a.date)).map(c => `<tr><td class="num">${fmtDate(c.date)}</td><td>${esc(c.text)}<div class="meta">${esc(c.type)} · ${c.market==='all'?'All markets':esc(c.market.toUpperCase())}${c.channel!=='all'?' · '+esc(CHANNELS.find(x=>x.id===c.channel)?.name||''):''}</div></td><td><button class="btn danger sm" data-act="delChange" data-id="${c.id}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="emptybox">No updates yet.</div>'}
+  </section>
+  <section class="panel"><div class="panel-head"><h2>Add an update</h2></div>
+    <form data-form="change" class="stack" style="gap:12px">
+      <label class="f">Date<input class="inp" type="date" name="date" value="${today()}"></label>
+      <label class="f">Market<select class="inp" name="market"><option value="all">All markets</option>${MARKETS.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select></label>
+      <label class="f">Channel<select class="inp" name="channel"><option value="all">All channels</option>${CHANNELS.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></label>
+      <label class="f">Type<select class="inp" name="type"><option>Creative</option><option>Budget</option><option>Targeting</option><option>Test</option><option>Tracking</option><option>Other</option></select></label>
+      <label class="f">What changed and why<textarea class="inp" name="text" required placeholder="One or two sentences the client will read."></textarea></label>
+      <button class="btn gold" type="submit">Publish update</button>
+    </form></section></div>`;
+}
+function adminCommentary(){
+  return `<div class="grid g2">${MARKETS.map(m => `<section class="panel"><div class="panel-head"><h2>${esc(m.name)}</h2></div>
+    <label class="f">Monthly commentary (shown on the market page)${area(`markets.${m.id}.commentary`, S.markets[m.id].commentary, 'Two or three sentences: what happened, why, what we\'re doing next.')}</label>
+    <label class="f mt">Tracking or market note (highlighted banner)${area(`markets.${m.id}.note`, S.markets[m.id].note)}</label></section>`).join('')}</div>`;
+}
+function adminData(){
+  const W = weeksWithData(), last = W[W.length-1];
+  return `<div class="split"><section class="panel"><div class="panel-head"><h2>Upload the media report</h2><span class="meta">Current: ${esc(S.perfSource)}</span></div>
+    <label class="dropzone" id="dz"><input type="file" accept=".xlsx,.xls" id="file" hidden><b style="display:block;font-weight:600">Drop the latest "Media Report & Tracker" .xlsx here</b><span class="meta">or click to choose. The portal reads the Master Report tab and replaces the weekly numbers.</span></label>
+    <p class="meta" style="margin-top:12px">Data runs to the week of ${fmtDate(last.date,{day:'numeric',month:'long',year:'numeric'})} · ${W.length} weeks · updated ${fmtDate(S.updated.performance)}</p>
+    <div class="row mt"><button class="btn ghost sm" data-act="resetData">Reset everything to the original prototype data</button></div>
+  </section>
+  <section class="panel"><div class="panel-head"><h2>Data checks</h2><span class="meta">Only visible to Sunny</span></div>${dataChecks()}</section></div>`;
+}
+function dataChecks(){
+  const items = [], W = weeksWithData();
+  items.push(['hi','The sheet\'s "Monthly Total" rows add up weekly CTR, CPC and conversion rates (e.g. AU Google shows a 66% August CTR). The portal recalculates these from totals, but the sheet should use totals too.']);
+  const top = S.perf.topline || {};
+  const emptyTop = Object.entries(top).filter(([k,v]) => !Object.values(v).some(x => x)).map(([k]) => k);
+  if (emptyTop.length) items.push(['md', `Topline rows with no values yet: ${emptyTop.join(', ')}.`]);
+  const {cur} = months(), bud = top['Monthly Marketing Budget (AUD)'] || {};
+  if (!bud[cur]) items.push(['md', `${monthName(cur,true)} budget and spend aren't entered in the topline section yet.`]);
+  const gaps = [];
+  for (const m of MARKETS) for (const c of CHANNELS){
+    const s = P().markets[m.id]?.[c.id]; if (!s) continue;
+    W.forEach(w => { if ((s.spend?.[w.i]||0) > 0){ if (s.clicks?.[w.i] == null) gaps.push(`${m.code} ${c.name} clicks, w/c ${fmtDate(w.date)}`); if (s.leads?.[w.i] == null) gaps.push(`${m.code} ${c.name} leads, w/c ${fmtDate(w.date)}`); } });
+  }
+  if (gaps.length) items.push(['md', `Blank cells with spend in the same week (${gaps.length}): ${gaps.join('; ')}. Clicks are estimated from CTR × impressions where possible.`]);
+  const orgEmpty = MARKETS.every(m => !(P().markets[m.id]?.organic?.sessions || []).some(v => v));
+  if (orgEmpty) items.push(['lo','Organic & AI search sessions and leads are blank for every market.']);
+  const partial = P().weeks.find(w => new Date(w.date+'T00:00:00') <= new Date() && new Date(new Date(w.date+'T00:00:00').getTime()+7*864e5) > new Date());
+  if (partial) items.push(['lo', `The week of ${fmtDate(partial.date)} is still in progress.`]);
+  return `<ul class="checks">${items.map(([s,t]) => `<li><span class="sev ${s}">${s==='hi'?'Fix':s==='md'?'Check':'Note'}</span><span>${esc(t)}</span></li>`).join('')}</ul>`;
+}
+function adminTracker(){
+  return `<section class="panel"><div class="panel-head"><h2>Creative tracker</h2><span class="meta">Set approval to "Awaiting approval" to let the client approve from their view</span></div>
+  <div class="stack" style="gap:12px">${S.tracker.map((r,i) => `<div class="crow">
+    <div class="full"><b style="font-weight:700">${esc(r.stage)}</b></div>
+    ${VERTICALS.map(v => `<label class="f">${v}${area(`tracker.${i}.${v}`, r[v])}</label>`).join('')}
+    <label class="f">CTA${inp(`tracker.${i}.cta`, r.cta)}</label>
+    <label class="f">Landing page URL${inp(`tracker.${i}.url`, r.url, 'https://…', 'url')}</label>
+    <label class="f">Asset link${inp(`tracker.${i}.asset`, r.asset, 'https://…', 'url')}</label>
+    <label class="f">Shared with OHQ${sel(`tracker.${i}.shared`, r.shared, ['No','Yes'])}</label>
+    <label class="f">Approval${sel(`tracker.${i}.approval`, r.approval, ['Not started','Awaiting approval','Changes requested','Approved'])}</label>
+    <label class="f">Live status${sel(`tracker.${i}.live`, r.live, ['Not live','Scheduled','Live','Paused'])}</label>
+    ${r.feedback ? `<label class="f full">Client feedback${inp(`tracker.${i}.feedback`, r.feedback)}</label>` : ''}
+  </div>`).join('')}</div></section>`;
+}
+function adminTeam(){
+  return `<section class="panel"><div class="panel-head"><h2>Who's who</h2><button class="btn sm" data-act="addPerson">Add person</button></div>
+  <label class="f" style="margin-bottom:14px">Working hours line (shown under the clocks)${inp('hours', S.hours)}</label>
+  <div class="stack" style="gap:12px">${S.team.map((p,i) => `<div class="crow">
+    <label class="f">Name${inp(`team.${i}.name`, p.name)}</label><label class="f">Role${inp(`team.${i}.role`, p.role)}</label>
+    <label class="f">Email${inp(`team.${i}.email`, p.email, '', 'email')}</label><label class="f">Phone${inp(`team.${i}.phone`, p.phone, '', 'tel')}</label>
+    <label class="f half">Looks after${inp(`team.${i}.focus`, p.focus)}</label>
+    <label class="f"><span class="row" style="gap:8px;margin-top:22px"><input type="checkbox" data-path="team.${i}.escalation" ${p.escalation?'checked':''}> Escalation contact</span></label>
+    <div class="row" style="align-items:flex-end"><button class="btn danger sm" data-act="delPerson" data-i="${i}">Remove</button></div>
+  </div>`).join('')}</div></section>`;
+}
+function adminUsers(){
+  return `<div class="split"><section class="panel"><div class="panel-head"><h2>People with access</h2></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>${S.users.map((u,i) => `<tr><td>${esc(u.name)}<div class="meta">${esc(u.org)}</div></td><td>${esc(u.email)}</td><td>${sel(`users.${i}.role`, u.role, [['viewer','Viewer (client)'],['editor','Editor (Sunny)'],['admin','Admin (Sunny)']])}</td><td>${u.email !== session.email ? `<button class="btn danger sm" data-act="delUser" data-i="${i}">Remove</button>` : ''}</td></tr>`).join('')}</tbody></table></div>
+    <p class="meta" style="margin-top:10px">Viewers see every market. Editors can change content; admins can also manage people.</p></section>
+  <section class="panel"><div class="panel-head"><h2>Invite someone</h2></div>
+    <form data-form="invite" class="stack" style="gap:12px">
+      <label class="f">Name<input class="inp" name="name" required></label>
+      <label class="f">Email<input class="inp" name="email" type="email" required></label>
+      <label class="f">Organisation<input class="inp" name="org" value="OfficeHQ"></label>
+      <label class="f">Role<select class="inp" name="role"><option value="viewer">Viewer (client)</option><option value="editor">Editor (Sunny)</option><option value="admin">Admin (Sunny)</option></select></label>
+      <button class="btn gold" type="submit">Send invite</button>
+      <p class="meta" style="margin:0">In production this emails a sign-up link. In the prototype it adds the account with password "preview".</p>
+    </form></section></div>`;
+}
+
+/* ---------------- Workbook import ---------------- */
+function parseWorkbook(wb){
+  const ws = wb.Sheets['Master Report'];
+  if (!ws) throw new Error('No "Master Report" tab found in that file.');
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
+  const r1 = rows[0] || [], r2 = rows[1] || [], r3 = rows[2] || [];
+  const pad = n => String(n).padStart(2,'0');
+  const serial = v => { const d = new Date(Math.round((v - 25569) * 864e5)); return {y:d.getUTCFullYear(), m:d.getUTCMonth()+1}; };
+  let month = null; const weeks = [], totals = {};
+  for (let c = 2; c < Math.max(r1.length, r2.length); c++){
+    if (typeof r1[c] === 'number' && r1[c] > 30000) month = serial(r1[c]);
+    const lab = r2[c];
+    if (month && typeof lab === 'string' && /^W\d/.test(lab) && r3[c] != null) weeks.push({col:c, date:`${month.y}-${pad(month.m)}-${pad(Number(r3[c]))}`, label:lab, month:`${month.y}-${pad(month.m)}`});
+    if (month && lab === 'Monthly Total') totals[`${month.y}-${pad(month.m)}`] = c;
+  }
+  if (!weeks.length) throw new Error('Couldn\'t find the week columns (W1, W2…) in rows 1–3.');
+  const MK = {'OFFICEHQ - AU':'au','RECEPTIONHQ - US':'us','RECEPTIONHQ - UK':'uk','RECEPTIONHQ - NZ':'nz'};
+  const CH = {'Paid Search':'google','Organic Search & Generative AI (combined)':'organic','Paid LinkedIn':'linkedin','Paid Meta':'meta','Paid ChatGPT':'chatgpt','Programatic':'programmatic','Programmatic':'programmatic','Paid Microsoft':'microsoft','Microsoft':'microsoft'};
+  const MET = {'Spend':'spend','Impressions':'impressions','Clicks':'clicks','CTR':'ctr','CPC':'cpc','Leads':'leads','Conversion Rate (%)':'cr'};
+  const markets = {}, topline = {}; let market = null, chan = null;
+  for (let r = 4; r < rows.length; r++){
+    const a = rows[r][0], b = rows[r][1];
+    if (typeof a === 'string'){
+      const hit = Object.keys(MK).find(k => a.trim().toUpperCase().startsWith(k));
+      if (hit){ market = MK[hit]; markets[market] = {}; chan = null; continue; }
+      if (CH[a.trim()]) chan = CH[a.trim()];
+    }
+    if (!b || typeof b !== 'string') continue;
+    if (!market){ topline[b] = Object.fromEntries(Object.entries(totals).map(([mk,c]) => [mk, rows[r][c] ?? 0])); continue; }
+    const key = MET[b.trim()] || (b.startsWith('Sessions') ? 'sessions' : b.startsWith('Leads') ? 'leads' : b.startsWith('Conv') ? 'cr' : null);
+    if (!chan || !key) continue;
+    markets[market][chan] = markets[market][chan] || {};
+    markets[market][chan][key] = weeks.map(w => { const v = rows[r][w.col]; return typeof v === 'number' ? v : null; });
+  }
+  if (!Object.keys(markets).length) throw new Error('Couldn\'t find the market sections (e.g. "OFFICEHQ - AU").');
+  return {weeks: weeks.map(({date,label,month}) => ({date,label,month})), markets, topline};
+}
+function importFile(file){
+  const rd = new FileReader();
+  rd.onload = e => {
+    try {
+      if (typeof XLSX === 'undefined') throw new Error('The spreadsheet reader didn\'t load. Check your connection and try again.');
+      const perf = parseWorkbook(XLSX.read(new Uint8Array(e.target.result), {type:'array'}));
+      S.perf = perf; S.perfSource = file.name; S.updated.performance = today();
+      for (const m of MARKETS) for (const c of CHANNELS){ const has = perf.markets[m.id]?.[c.id]?.spend?.some(v => v > 0); const ch = S.markets[m.id].channels[c.id]; if (has && ch.status === 'not_live') ch.status = 'live'; }
+      save(`Imported ${weeksWithData().length} weeks from ${file.name}`); render();
+    } catch(err){ toast(err.message); }
+  };
+  rd.readAsArrayBuffer(file);
+}
+
+/* ---------------- Events ---------------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t) { if (!e.target.closest('.side') && $('#side')?.classList.contains('open')) $('#side').classList.remove('open'); return; }
+  const a = t.dataset.act, i = +t.dataset.i;
+  const acts = {
+    logout(){ setSession(null); location.hash = '#/home'; render(); },
+    theme(){ const r = document.documentElement, cur = r.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); r.dataset.theme = cur === 'dark' ? 'light' : 'dark'; },
+    menu(){ $('#side').classList.toggle('open'); },
+    demo(){ const f = document.querySelector('[data-form="login"]'); f.email.value = t.dataset.email; f.password.value = 'preview'; },
+    addLink(){ S.links.push({id:uid(), label:'New link', desc:'', url:'', icon:'link'}); S.updated.links = today(); save('Link added'); render(); },
+    delLink(){ S.links.splice(i,1); S.updated.links = today(); save('Link removed'); render(); },
+    addCreative(){ getPath(S, t.dataset.base).creatives.push({name:'', stage:'', vertical:'', message:'', cta:'', asset:'', status:'Live'}); save('Creative added'); render(); },
+    delCreative(){ getPath(S, t.dataset.base).creatives.splice(i,1); save('Creative removed'); render(); },
+    delChange(){ S.changes = S.changes.filter(c => c.id !== t.dataset.id); save('Update deleted'); render(); },
+    addPerson(){ S.team.push({id:uid(), name:'', role:'', focus:'', email:'', phone:'', escalation:false}); save('Person added'); render(); },
+    delPerson(){ S.team.splice(i,1); save('Person removed'); render(); },
+    delUser(){ S.users.splice(i,1); save('Access removed'); render(); },
+    resetData(){ if (confirm('Reset all portal content and data to the original prototype? This clears edits in this browser.')){ S = buildSeed(); save('Reset'); render(); } },
+    approve(){ S.tracker[i].approval = 'Approved'; S.changes.push({id:uid(), date:today(), market:'all', channel:'all', type:'Creative', text:`${session.name} approved messaging for "${S.tracker[i].stage}".`, by:session.name}); S.updated.creative = today(); save('Approved'); render(); },
+    changes(){ const note = prompt('What would you like changed?'); if (!note) return; S.tracker[i].approval = 'Changes requested'; S.tracker[i].feedback = `${session.name}: ${note}`; S.updated.creative = today(); save('Sent to the team'); render(); },
+  };
+  acts[a]?.();
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.id === 'file' && el.files[0]) return importFile(el.files[0]);
+  const p = el.dataset?.path; if (!p) return;
+  setPath(S, p, el.type === 'checkbox' ? el.checked : el.value);
+  if (p.startsWith('links')) S.updated.links = today();
+  if (p.startsWith('tracker')) S.updated.creative = today();
+  if (p.startsWith('team')) S.updated.team = today();
+  save('Saved');
+  if (el.tagName === 'SELECT' || el.type === 'checkbox') render();
+});
+document.addEventListener('submit', e => {
+  const f = e.target, kind = f.dataset.form; if (!kind) return; e.preventDefault();
+  const d = Object.fromEntries(new FormData(f));
+  if (kind === 'login'){
+    const u = S.users.find(x => x.email.toLowerCase() === (d.email || '').trim().toLowerCase());
+    const err = $('#loginErr');
+    if (!u) return err.textContent = 'That email doesn\'t have access. Ask your Sunny account team for an invite.';
+    if (d.password !== 'preview') return err.textContent = 'Incorrect password.';
+    setSession(u); location.hash = '#/home'; render();
+  }
+  if (kind === 'change'){ if (!d.text.trim()) return; S.changes.push({id:uid(), date:d.date || today(), market:d.market, channel:d.channel, type:d.type, text:d.text.trim(), by:session.name}); save('Update published'); render(); }
+  if (kind === 'invite'){ if (S.users.some(u => u.email.toLowerCase() === d.email.toLowerCase())) return toast('That email already has access'); S.users.push({email:d.email.trim(), name:d.name.trim(), org:d.org.trim() || 'OfficeHQ', role:d.role}); save(`Invited ${d.name}`); render(); }
+});
+document.addEventListener('dragover', e => { const dz = e.target.closest?.('#dz'); if (dz){ e.preventDefault(); dz.classList.add('over'); } });
+document.addEventListener('dragleave', e => { e.target.closest?.('#dz')?.classList.remove('over'); });
+document.addEventListener('drop', e => { const dz = e.target.closest?.('#dz'); if (dz){ e.preventDefault(); dz.classList.remove('over'); const f = e.dataTransfer.files[0]; if (f) importFile(f); } });
+window.addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>
