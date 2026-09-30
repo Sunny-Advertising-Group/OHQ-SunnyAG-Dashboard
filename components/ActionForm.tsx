@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useRef } from "react";
-import type { ActionState } from "@/app/(portal)/admin/actions";
+import type { ActionState } from "@/app/admin/actions";
 
 /**
  * A form bound to a server action, with an inline "Saved" / error message.

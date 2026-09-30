@@ -61,8 +61,11 @@ npm test                     # calculation + workbook parser tests
 npm run lint && npm run typecheck
 ```
 
-Database changes are SQL migrations in `supabase/migrations/`. `scripts/build-seed.mjs` generated the seed from the
-prototype's embedded workbook data.
+Database changes are SQL migrations in `supabase/migrations/`. The prototype seed (`scripts/build-seed.mjs`) was
+removed by `20260930000006_clear_prototype_seed.sql`; performance data now comes only from the media report
+(the "OfficeHQ - Media Report & Tracker 2026" Google Sheet, Master Report tab). Everything else is entered in Admin.
+
+The admin area (`app/admin`) has its own layout and menu, separate from the client portal (`app/(portal)`).
 
 ## v2 (later)
 

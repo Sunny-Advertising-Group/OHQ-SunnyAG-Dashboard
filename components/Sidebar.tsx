@@ -96,7 +96,7 @@ export function Shell({
               <div className="nav-label">Sunny only</div>
               <Link href="/admin" className={on(path.startsWith("/admin"))}>
                 <Icon name="admin" />
-                Admin
+                Open Admin
               </Link>
             </>
           )}

@@ -240,7 +240,11 @@ export function parseRows(rows: Cell[][]): ParsedWorkbook {
           leads_actual: null,
           leads_yoy_pct: null,
         };
-        tl[t[1]] = numOrNull(row[col]);
+        // The sheet's Monthly Total is a SUM formula, so a month with nothing entered
+        // reads 0. Treat that as blank: blank stays null, never 0.
+        const weekCells = weeks.filter((w) => w.month === mk).map((w) => numOrNull(row[w.col]));
+        const tot = numOrNull(row[col]);
+        tl[t[1]] = tot === 0 && weekCells.every((v) => v == null) ? null : tot;
         topline.set(mk, tl);
       }
       continue;

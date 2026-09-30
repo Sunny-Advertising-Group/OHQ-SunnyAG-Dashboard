@@ -19,7 +19,7 @@ function sheet(): Cell[][] {
     [],
     [null, "Monthly Marketing Budget (AUD) ", null, null, null, null, null, 108381.33, null, null, null, null],
     [null, "Monthly Marketing Spend (AUD)", null, null, null, null, null, 88133.15, null, null, null, null],
-    [null, "Lead Target", null, null, null, null, null, null, null, null, null, null],
+    [null, "Lead Target", null, null, null, null, null, 0, null, null, null, 0],
     ["OFFICEHQ - AU", null],
     ["Paid Search ", "Spend", 4061.5, 4490.14, 3669.64, 4411.4, 4097.83, 20730.51, 4852.47, 6763.99, 5039.26, 16655.72],
     [null, "Impressions", 1737, 1723, 1435, 1690, 2134, 8719, 2224, 2816, 3066, 8106],

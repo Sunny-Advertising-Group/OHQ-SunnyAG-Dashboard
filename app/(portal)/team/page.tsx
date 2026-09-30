@@ -26,7 +26,7 @@ export default async function TeamPage() {
       </div>
       <Clocks zones={zones} />
       <p className="meta" style={{ margin: "8px 0 22px" }}>
-        {hours.value}
+        {hours.value || "Sunny's working hours will be listed here."}
       </p>
       {team.length ? (
         <div className="grid g2">
