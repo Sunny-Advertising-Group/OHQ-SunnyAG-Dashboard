@@ -87,6 +87,10 @@ export function Shell({
             <Icon name="creative" />
             Creative tracker
           </Link>
+          <Link href="/reporting" className={on(path.startsWith("/reporting"))}>
+            <Icon name="chart" />
+            Reporting
+          </Link>
           <Link href="/team" className={on(path.startsWith("/team"))}>
             <Icon name="team" />
             Who&apos;s who
