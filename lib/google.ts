@@ -9,18 +9,45 @@ interface ServiceAccount {
   private_key: string;
 }
 
-export function serviceAccount(): ServiceAccount | null {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-  if (!raw) return null;
-  try {
-    // Accept the JSON key as pasted, or base64-encoded.
-    const json = raw.trim().startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8");
-    const k = JSON.parse(json);
-    if (!k.client_email || !k.private_key) return null;
-    return { client_email: k.client_email, private_key: k.private_key };
-  } catch {
-    return null;
+/**
+ * Reads GOOGLE_SERVICE_ACCOUNT_KEY. Accepts the downloaded JSON key as pasted (with or
+ * without surrounding quotes), or base64 of it. Returns a plain-English problem if it
+ * can't be used, so Admin can show exactly what to fix.
+ */
+export function readServiceAccount(): { sa: ServiceAccount | null; problem?: string } {
+  let raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  if (!raw || !raw.trim()) return { sa: null, problem: "GOOGLE_SERVICE_ACCOUNT_KEY isn't set in Vercel (Production)." };
+  raw = raw.trim();
+  if ((raw.startsWith("'") && raw.endsWith("'")) || (raw.startsWith('"') && raw.endsWith('"') && !raw.startsWith('"{'))) raw = raw.slice(1, -1).trim();
+  let text = raw;
+  if (!raw.startsWith("{")) {
+    try {
+      const decoded = Buffer.from(raw, "base64").toString("utf8").trim();
+      if (decoded.startsWith("{")) text = decoded;
+    } catch {}
   }
+  if (!text.startsWith("{")) {
+    if (raw.includes("BEGIN PRIVATE KEY"))
+      return { sa: null, problem: "GOOGLE_SERVICE_ACCOUNT_KEY holds only the private key. Paste the whole downloaded .json file, from { to }." };
+    if (/@.*\.iam\.gserviceaccount\.com$/.test(raw))
+      return { sa: null, problem: "GOOGLE_SERVICE_ACCOUNT_KEY holds the service account email. Paste the whole downloaded .json key file instead." };
+    return { sa: null, problem: "GOOGLE_SERVICE_ACCOUNT_KEY isn't the JSON key file. Paste the whole downloaded .json file, from { to }." };
+  }
+  let k: Record<string, unknown>;
+  try {
+    k = JSON.parse(text);
+  } catch {
+    return { sa: null, problem: "GOOGLE_SERVICE_ACCOUNT_KEY looks cut off or edited (it isn't valid JSON). Paste the whole .json file again." };
+  }
+  if (typeof k.client_email !== "string" || typeof k.private_key !== "string")
+    return { sa: null, problem: "GOOGLE_SERVICE_ACCOUNT_KEY is JSON but not a service account key (no client_email / private_key). Use Keys → Add key → JSON." };
+  // Keys pasted with literal "\n" sequences still work.
+  const private_key = (k.private_key as string).includes("\\n") ? (k.private_key as string).replace(/\\n/g, "\n") : (k.private_key as string);
+  return { sa: { client_email: k.client_email, private_key } };
+}
+
+export function serviceAccount(): ServiceAccount | null {
+  return readServiceAccount().sa;
 }
 
 const b64url = (v: string | Buffer) => Buffer.from(v).toString("base64url");
@@ -55,8 +82,8 @@ const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.s
 
 /** Download the Google Sheet as an .xlsx file, plus its title and last-modified time. */
 export async function exportSheet(fileId: string) {
-  const sa = serviceAccount();
-  if (!sa) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY isn't set in Vercel, so the sheet can't be read.");
+  const { sa, problem } = readServiceAccount();
+  if (!sa) throw new Error(problem);
   const token = await accessToken(sa);
   const auth = { Authorization: `Bearer ${token}` };
   const meta = await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=name,modifiedTime&supportsAllDrives=true`, {
@@ -81,8 +108,8 @@ export async function exportSheet(fileId: string) {
  * Needs the Google Sheets API enabled in the same Google Cloud project.
  */
 export async function fetchSheetTab(spreadsheetId: string, gid: number) {
-  const sa = serviceAccount();
-  if (!sa) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY isn't set in Vercel.");
+  const { sa, problem } = readServiceAccount();
+  if (!sa) throw new Error(problem);
   const auth = { Authorization: `Bearer ${await accessToken(sa)}` };
   const base = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}`;
   const explain = async (res: Response) => {

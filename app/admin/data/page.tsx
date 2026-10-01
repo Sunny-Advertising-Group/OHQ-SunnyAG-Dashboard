@@ -7,7 +7,7 @@ import { ImportPanel } from "./ImportPanel";
 import { SyncNowButton } from "./SheetSync";
 import { getSetting } from "@/lib/data";
 import { SHEET_ID, type SyncStatus } from "@/lib/sheet-sync";
-import { serviceAccount } from "@/lib/google";
+import { readServiceAccount } from "@/lib/google";
 
 export default async function AdminData() {
   const supabase = await createClient();
@@ -22,7 +22,7 @@ export default async function AdminData() {
   try {
     sync = syncRaw.value ? (JSON.parse(syncRaw.value) as SyncStatus) : null;
   } catch {}
-  const sa = serviceAccount();
+  const { sa, problem: keyProblem } = readServiceAccount();
   const configured = !!sa && !!process.env.CRON_SECRET;
   const when = (ts?: string) =>
     ts ? new Date(ts).toLocaleString("en-AU", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Australia/Brisbane" }) : "—";
@@ -81,7 +81,7 @@ export default async function AdminData() {
               <div>
                 <b>Not connected yet.</b>{" "}
                 {!sa
-                  ? "Add the Google service account key (GOOGLE_SERVICE_ACCOUNT_KEY) in Vercel, then share the sheet with the service account's email as a Viewer."
+                  ? keyProblem
                   : "CRON_SECRET isn't set in Vercel, so the hourly run is off. Sync now still works."}
               </div>
             </div>
