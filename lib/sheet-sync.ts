@@ -1,12 +1,16 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { exportSheet } from "@/lib/google";
+import { exportSheet, fetchSheetTab } from "@/lib/google";
+import { buildSnapshot } from "@/lib/sheet-grid";
 import { parseWorkbookBuffer } from "@/lib/parse-workbook";
 import { applyImport, countChanges } from "@/lib/import-apply";
 import { todayBrisbane } from "@/lib/format";
 
 /** The "OfficeHQ - Media Report & Tracker 2026" Google Sheet. Override with MEDIA_REPORT_SHEET_ID. */
 export const SHEET_ID = process.env.MEDIA_REPORT_SHEET_ID || "1fMU_2rKLnHQ13H2HMIgHecUWjjbwyGFZr_lqQfDsyog";
+
+/** The tab shown on the Media report page (the #gid= in the sheet link). Override with MEDIA_REPORT_GID. */
+export const REPORT_GID = Number(process.env.MEDIA_REPORT_GID || 157140433);
 
 export interface SyncStatus {
   at: string; // when the sync ran
@@ -15,6 +19,27 @@ export interface SyncStatus {
   changed: boolean;
   sheetModified?: string;
   serviceEmail?: string;
+  report?: { ok: boolean; message: string };
+}
+
+/** Refresh the formatted copy of the report tab shown on the Media report page. */
+async function refreshReportTab(supabase: ReturnType<typeof createAdminClient>, sheetModified?: string) {
+  try {
+    const { sheet, theme } = await fetchSheetTab(SHEET_ID, REPORT_GID);
+    if (!sheet) throw new Error("Google returned no data for that tab.");
+    const snap = buildSnapshot(sheet, theme);
+    const { error } = await supabase.from("sheet_snapshots").upsert({
+      gid: REPORT_GID,
+      title: snap.title,
+      snapshot: snap,
+      fetched_at: new Date().toISOString(),
+      sheet_modified_at: sheetModified ?? null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true, message: `Media report tab “${snap.title}” refreshed (${snap.rows.length} rows).` };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Couldn't refresh the Media report tab." };
+  }
 }
 
 /**
@@ -54,6 +79,7 @@ export async function syncFromSheet(triggeredBy: string | null): Promise<SyncSta
   } catch (e) {
     status = { at: new Date().toISOString(), ok: false, changed: false, message: e instanceof Error ? e.message : "Sync failed." };
   }
+  status.report = await refreshReportTab(supabase, status.sheetModified);
   await supabase.from("settings").upsert({ key: "sheet_sync", value: JSON.stringify(status) });
   return status;
 }

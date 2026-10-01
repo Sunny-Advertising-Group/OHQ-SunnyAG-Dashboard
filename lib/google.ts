@@ -31,7 +31,7 @@ async function accessToken(sa: ServiceAccount): Promise<string> {
   const claims = b64url(
     JSON.stringify({
       iss: sa.client_email,
-      scope: "https://www.googleapis.com/auth/drive.readonly",
+      scope: "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets.readonly",
       aud: "https://oauth2.googleapis.com/token",
       iat: now,
       exp: now + 3600,
@@ -73,4 +73,54 @@ export async function exportSheet(fileId: string) {
   );
   if (!file.ok) throw new Error(`Google Drive returned ${file.status} exporting the sheet.`);
   return { name, modifiedTime, buf: new Uint8Array(await file.arrayBuffer()), serviceEmail: sa.client_email };
+}
+
+/**
+ * One tab of the Google Sheet with its full formatting (Sheets API, includeGridData),
+ * picked by its gid (the number after #gid= in the sheet's URL).
+ * Needs the Google Sheets API enabled in the same Google Cloud project.
+ */
+export async function fetchSheetTab(spreadsheetId: string, gid: number) {
+  const sa = serviceAccount();
+  if (!sa) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY isn't set in Vercel.");
+  const auth = { Authorization: `Bearer ${await accessToken(sa)}` };
+  const base = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}`;
+  const explain = async (res: Response) => {
+    const body = await res.json().catch(() => ({}));
+    const msg: string = body?.error?.message ?? `status ${res.status}`;
+    if (/has not been used|is disabled|SERVICE_DISABLED/i.test(msg))
+      return "The Google Sheets API isn't enabled. In Google Cloud → APIs & Services → Library, enable “Google Sheets API” for the same project.";
+    if (res.status === 403 || res.status === 404) return `The sheet isn't shared with ${sa.client_email}. Share it with that address as a Viewer.`;
+    return `Google Sheets returned: ${msg}`;
+  };
+
+  const meta = await fetch(`${base}?fields=${encodeURIComponent("properties(spreadsheetTheme),sheets.properties(sheetId,title,gridProperties)")}`, {
+    headers: auth,
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!meta.ok) throw new Error(await explain(meta));
+  const m = await meta.json();
+  const tab = (m.sheets ?? []).find((x: { properties: { sheetId: number } }) => x.properties.sheetId === gid);
+  if (!tab) throw new Error(`No tab with gid ${gid} in the sheet. Check the link's #gid= number.`);
+  const title: string = tab.properties.title;
+  const rows = Math.min(tab.properties.gridProperties?.rowCount ?? 400, 600);
+  const cols = Math.min(tab.properties.gridProperties?.columnCount ?? 52, 104);
+  const colLetter = (n: number) => {
+    let s = "";
+    for (let x = n; x > 0; x = Math.floor((x - 1) / 26)) s = String.fromCharCode(65 + ((x - 1) % 26)) + s;
+    return s;
+  };
+  const range = `'${title.replace(/'/g, "''")}'!A1:${colLetter(cols)}${rows}`;
+  const fields =
+    "sheets(properties(sheetId,title,gridProperties(frozenRowCount,frozenColumnCount,hideGridlines)),merges," +
+    "data(columnMetadata(pixelSize,hiddenByUser),rowMetadata(pixelSize,hiddenByUser),rowData(values(formattedValue,effectiveValue," +
+    "effectiveFormat(backgroundColor,backgroundColorStyle,horizontalAlignment,verticalAlignment,wrapStrategy,borders," +
+    "textFormat(bold,italic,strikethrough,underline,fontSize,fontFamily,foregroundColor,foregroundColorStyle))))))";
+  const res = await fetch(`${base}?includeGridData=true&ranges=${encodeURIComponent(range)}&fields=${encodeURIComponent(fields)}`, {
+    headers: auth,
+    signal: AbortSignal.timeout(30000),
+  });
+  if (!res.ok) throw new Error(await explain(res));
+  const body = await res.json();
+  return { sheet: body.sheets?.[0], theme: m.properties?.spreadsheetTheme };
 }

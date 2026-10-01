@@ -58,6 +58,14 @@ export default async function AdminData() {
               <dd className={sync.ok ? "" : "err-msg"} style={{ textAlign: "right" }}>
                 {sync.message}
               </dd>
+              {sync.report && (
+                <>
+                  <dt>Media report tab</dt>
+                  <dd className={sync.report.ok ? "" : "err-msg"} style={{ textAlign: "right" }}>
+                    {sync.report.message}
+                  </dd>
+                </>
+              )}
               {sync.sheetModified && (
                 <>
                   <dt>Sheet last edited</dt>

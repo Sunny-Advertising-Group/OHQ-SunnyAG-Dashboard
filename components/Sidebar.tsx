@@ -72,6 +72,10 @@ export function Shell({
             <Icon name="home" />
             Overview
           </Link>
+          <Link href="/report" className={on(path.startsWith("/report"))} aria-current={path.startsWith("/report") ? "page" : undefined}>
+            <Icon name="sheet" />
+            Media report
+          </Link>
           <div className="nav-label">Markets</div>
           {markets.map((m) => {
             const active = path.startsWith(`/market/${m.id}`);

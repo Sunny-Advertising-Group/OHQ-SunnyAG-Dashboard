@@ -459,8 +459,9 @@ export async function syncSheetNow(): Promise<ActionState> {
   return guard(async () => {
     const { user } = await requireEditor();
     const r = await syncFromSheet(user.id);
-    if (!r.ok) throw new Error(r.message);
-    return done(r.message);
+    const report = r.report ? ` ${r.report.message}` : "";
+    if (!r.ok || (r.report && !r.report.ok)) throw new Error(`${r.message}${report}`);
+    return done(`${r.message}${report}`);
   });
 }
 

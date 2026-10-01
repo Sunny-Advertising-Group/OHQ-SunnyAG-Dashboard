@@ -310,3 +310,12 @@ textarea.inp{min-height:74px;resize:vertical;line-height:1.5}
 .linkbox{display:flex;gap:8px;align-items:center}
 .linkbox .inp{font-size:12px}
 details.more summary{cursor:pointer;color:var(--muted);font-size:12.5px}
+
+/* ---------- Media report (Google Sheet copy) ---------- */
+.sheet-wrap{overflow:auto;max-height:calc(100vh - 230px);border:1px solid var(--line);border-radius:var(--radius);background:#fff;color-scheme:light}
+.sheet{border-collapse:collapse;table-layout:fixed;font-family:Arial,sans-serif;font-size:10pt;color:#000;background:#fff;line-height:1.25}
+.sheet td{padding:2px 3px;text-overflow:clip}
+.sheet tr{scroll-margin-top:90px}
+.sheet td.sheet-flag{position:relative;cursor:help}
+.sheet td.sheet-flag::after,.sheet-flag-key{content:"";position:absolute;top:0;right:0;border-style:solid;border-width:0 7px 7px 0;border-color:transparent #e8710a transparent transparent}
+.sheet-flag-key{position:relative;display:inline-block;vertical-align:middle;margin-right:4px}
