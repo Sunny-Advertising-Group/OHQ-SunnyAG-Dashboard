@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { initials } from "@/lib/format";
@@ -48,6 +48,15 @@ export function AdminShell({
   }, [open]);
 
   const current = SECTIONS.flatMap((s) => s.items).find(([k]) => path.startsWith(`/admin/${k}`));
+  const sp = useSearchParams();
+  // "Back" goes to the client page this admin section edits.
+  const back: [string, string] = path.startsWith("/admin/channels")
+    ? [`/market/${sp.get("m") || "au"}${sp.get("c") ? `/${sp.get("c")}` : ""}#channel`, "Back to this channel in the client portal"]
+    : path.startsWith("/admin/tracker")
+      ? ["/creative", "Back to the creative tracker"]
+      : path.startsWith("/admin/team")
+        ? ["/team", "Back to Who's who"]
+        : ["/", "Back to the client portal"];
 
   return (
     <div className="app">
@@ -82,8 +91,7 @@ export function AdminShell({
           ))}
           <div className="nav-label">Client view</div>
           <Link href="/">
-            <Icon name="home" />
-            Open the client portal
+            <Icon name="home" />← Back to the client portal
           </Link>
         </nav>
         <div className="side-foot">
@@ -109,8 +117,14 @@ export function AdminShell({
             <Icon name="menu" size={18} strokeWidth={2} />
           </button>
           <b style={{ fontWeight: 700 }}>OfficeHQ Admin</b>
+          <Link href="/" className="linkbtn" style={{ marginLeft: "auto" }}>
+            ← Client portal
+          </Link>
         </div>
         <main id="main" tabIndex={-1}>
+          <Link href={back[0]} className="btn ghost sm" style={{ marginBottom: 16 }}>
+            ← {back[1]}
+          </Link>
           <div className="page-head">
             <div>
               <div className="meta">Admin · Sunny only</div>

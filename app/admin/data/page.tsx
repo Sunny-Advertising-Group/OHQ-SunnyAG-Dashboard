@@ -4,6 +4,10 @@ import { getCore, getTopline } from "@/lib/data";
 import { fmtDate, fmtStamp, todayBrisbane } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { ImportPanel } from "./ImportPanel";
+import { SyncNowButton } from "./SheetSync";
+import { getSetting } from "@/lib/data";
+import { SHEET_ID, type SyncStatus } from "@/lib/sheet-sync";
+import { serviceAccount } from "@/lib/google";
 
 export default async function AdminData() {
   const supabase = await createClient();
@@ -13,6 +17,15 @@ export default async function AdminData() {
     supabase.from("imports").select("id,file_name,weeks_imported,imported_at,warnings,imported_by").order("imported_at", { ascending: false }).limit(10),
   ]);
   const latest = imports?.[0];
+  const syncRaw = await getSetting("sheet_sync");
+  let sync: SyncStatus | null = null;
+  try {
+    sync = syncRaw.value ? (JSON.parse(syncRaw.value) as SyncStatus) : null;
+  } catch {}
+  const sa = serviceAccount();
+  const configured = !!sa && !!process.env.CRON_SECRET;
+  const when = (ts?: string) =>
+    ts ? new Date(ts).toLocaleString("en-AU", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Australia/Brisbane" }) : "—";
   // Checks that only the sheet can reveal (ratio rows summed, unknown channels) come from the latest import.
   const fromSheet = ((latest?.warnings ?? []) as Check[]).filter((w) => /Monthly Total|isn't recognised|seeded/i.test(w.text));
   const checks = dataChecks({ perf, markets, channels, topline, importWarnings: fromSheet, today: todayBrisbane() });
@@ -27,7 +40,54 @@ export default async function AdminData() {
       <div className="stack">
         <section className="panel">
           <div className="panel-head">
-            <h2>Upload the media report</h2>
+            <h2>Google Sheet sync</h2>
+            <span className="meta">Every hour, on the hour</span>
+          </div>
+          <p style={{ margin: "0 0 10px" }}>
+            Source:{" "}
+            <a className="linkbtn" href={`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`} target="_blank" rel="noopener noreferrer">
+              OfficeHQ - Media Report &amp; Tracker 2026
+            </a>{" "}
+            (Master Report tab)
+          </p>
+          {sync ? (
+            <dl className="kv" style={{ marginBottom: 12 }}>
+              <dt>Last checked</dt>
+              <dd>{when(sync.at)} (Brisbane)</dd>
+              <dt>Result</dt>
+              <dd className={sync.ok ? "" : "err-msg"} style={{ textAlign: "right" }}>
+                {sync.message}
+              </dd>
+              {sync.sheetModified && (
+                <>
+                  <dt>Sheet last edited</dt>
+                  <dd>{when(sync.sheetModified)}</dd>
+                </>
+              )}
+            </dl>
+          ) : (
+            <p className="meta">Hasn&apos;t run yet.</p>
+          )}
+          {!configured && (
+            <div className="note" style={{ marginBottom: 12 }}>
+              <div>
+                <b>Not connected yet.</b>{" "}
+                {!sa
+                  ? "Add the Google service account key (GOOGLE_SERVICE_ACCOUNT_KEY) in Vercel, then share the sheet with the service account's email as a Viewer."
+                  : "CRON_SECRET isn't set in Vercel, so the hourly run is off. Sync now still works."}
+              </div>
+            </div>
+          )}
+          {sa && (
+            <p className="meta" style={{ margin: "0 0 10px" }}>
+              Reads the sheet as <b>{sa.client_email}</b>. The sheet must be shared with this address.
+            </p>
+          )}
+          <SyncNowButton />
+        </section>
+        <section className="panel">
+          <div className="panel-head">
+            <h2>Or upload a file</h2>
             <Updated at={perfUpdatedAt} label="Data updated" />
           </div>
           <ImportPanel />

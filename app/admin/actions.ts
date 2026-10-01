@@ -4,9 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkEmbeddable } from "@/lib/embed-check";
-import { parseWorkbookBuffer, type ParsedRow, type ParsedTopline, type Warning } from "@/lib/parse-workbook";
-import { buildPerf, Perf, type PerfRow } from "@/lib/perf";
-import { dataChecks } from "@/lib/checks";
+import { parseWorkbookBuffer, type ParsedRow, type Warning } from "@/lib/parse-workbook";
 import {
   APPROVAL,
   CHANGE_TYPES,
@@ -20,7 +18,8 @@ import {
   type Role,
 } from "@/lib/constants";
 import { fmtDate, todayBrisbane } from "@/lib/format";
-import { fetchAllPerf } from "@/lib/data";
+import { applyImport } from "@/lib/import-apply";
+import { syncFromSheet } from "@/lib/sheet-sync";
 
 export type ActionState = { ok?: string; error?: string } | undefined;
 
@@ -448,54 +447,20 @@ export async function commitImport(path: string, fileName: string): Promise<Acti
     const moved = await supabase.storage.from("imports").move(path, finalPath);
     const storagePath = moved.error ? path : finalPath;
 
-    const now = new Date().toISOString();
-    const rows = parsed.rows.map((r) => ({ ...r, source_file: fileName, imported_at: now }));
-    for (let i = 0; i < rows.length; i += 500) {
-      check((await supabase.from("perf_weekly").upsert(rows.slice(i, i + 500), { onConflict: "market_id,channel_id,week_start" })).error);
-    }
-    if (parsed.topline.length) check((await supabase.from("perf_topline").upsert(parsed.topline as ParsedTopline[])).error);
-
-    // A channel with spend in the sheet that's still marked "Not live" becomes Live.
-    const withSpend = new Set(parsed.rows.filter((r) => (r.spend ?? 0) > 0).map((r) => `${r.market_id}:${r.channel_id}`));
-    const { data: mcs } = await supabase.from("market_channels").select("market_id,channel_id,status");
-    const promote = (mcs ?? []).filter((m) => m.status === "not_live" && withSpend.has(`${m.market_id}:${m.channel_id}`));
-    for (const m of promote)
-      check((await supabase.from("market_channels").update({ status: "live" }).eq("market_id", m.market_id).eq("channel_id", m.channel_id)).error);
-
-    // Record the import with every data check at this moment.
-    const [{ data: perfRows }, { data: markets }, { data: channels }, { data: topline }] = await Promise.all([
-      fetchAllPerf(supabase),
-      supabase.from("markets").select("id,code").order("sort"),
-      supabase.from("channels").select("id,name").order("sort"),
-      supabase.from("perf_topline").select("*"),
-    ]);
-    const perf = new Perf(
-      buildPerf((perfRows ?? []) as PerfRow[]),
-      (markets ?? []).map((m) => m.id),
-      (channels ?? []).map((c) => c.id),
-    );
-    const warnings = dataChecks({
-      perf,
-      markets: markets ?? [],
-      channels: channels ?? [],
-      topline: (topline ?? []).map((t) => ({ ...t, month: String(t.month) })),
-      importWarnings: parsed.warnings,
-      today: todayBrisbane(),
-    });
-    check(
-      (
-        await supabase.from("imports").insert({
-          file_name: fileName,
-          storage_path: storagePath,
-          weeks_imported: perf.weeks().length,
-          imported_by: user.id,
-          warnings,
-        })
-      ).error,
-    );
+    const res = await applyImport(supabase, parsed, { fileName, storagePath, importedBy: user.id });
     return done(
-      `Imported ${perf.weeks().length} weeks from ${fileName}.${promote.length ? ` ${promote.length} channel${promote.length === 1 ? "" : "s"} marked Live.` : ""}`,
+      `Imported ${res.weeks} weeks from ${fileName}.${res.promoted ? ` ${res.promoted} channel${res.promoted === 1 ? "" : "s"} marked Live.` : ""}`,
     );
+  });
+}
+
+/** "Sync now" in Admin → Performance data. The same sync runs every hour on its own. */
+export async function syncSheetNow(): Promise<ActionState> {
+  return guard(async () => {
+    const { user } = await requireEditor();
+    const r = await syncFromSheet(user.id);
+    if (!r.ok) throw new Error(r.message);
+    return done(r.message);
   });
 }
 

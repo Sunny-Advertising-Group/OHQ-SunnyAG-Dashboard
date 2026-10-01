@@ -46,6 +46,14 @@ Calculation rules live in `lib/perf.ts`: ratios always from totals; month-on-mon
 no spend summed across markets; blank clicks estimated from CTR × impressions and flagged `*`; a week shows only if
 something had spend. Data checks (`lib/checks.ts`) are recomputed on every view and saved with each import.
 
+### Hourly Google Sheet sync
+
+`vercel.json` runs `/api/cron/sync-sheet` every hour. It exports the "OfficeHQ - Media Report & Tracker 2026" Google
+Sheet as .xlsx through the Drive API (service account, read-only), parses it with the same parser as the upload, and
+imports only if a value changed. The result is shown in Admin → Performance data, which also has **Sync now**.
+Needs `GOOGLE_SERVICE_ACCOUNT_KEY` (with the Drive API enabled and the sheet shared to the service account's email)
+and `CRON_SECRET`.
+
 ## Whatagraph
 
 One share link per market × channel. "Open in Whatagraph" is the default. When a link is saved, the server fetches it
