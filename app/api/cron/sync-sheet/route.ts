@@ -10,6 +10,6 @@ export async function GET(request: Request) {
   if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const status = await syncFromSheet(null);
+  const status = await syncFromSheet();
   return NextResponse.json(status, { status: status.ok ? 200 : 500 });
 }

@@ -37,22 +37,29 @@ Roles (`profiles.role`): `viewer` (client: reads everything, approves creative),
 
 ## Performance data
 
-Admin → Performance data accepts `OfficeHQ - Media Report & Tracker 2026.xlsx`. The file is parsed on the server
-(`lib/parse-workbook.ts`, a port of the prototype's `parseWorkbook()`), stored in the `imports` bucket, and previewed
-(weeks added / changed, before → after values) before anything is written. Commit upserts by
-`(market, channel, week_start)`; blank cells stay null.
+Every performance number comes from **Whatagraph**. A market × channel with no connected Whatagraph account is treated
+as not live. The connected accounts are listed in `lib/whatagraph.ts` (and in Admin → Performance data).
+
+A daily Claude routine (about 6am Brisbane) fetches each account for the last three Sunday–Saturday weeks using the
+Whatagraph connector (Google Ads per day, since its "week" dimension runs Monday–Sunday), then calls
+`load_whatagraph_weeks(rows, from, note)` in Supabase. That function replaces those weeks, derives the sheet's month /
+`W{n}` labels, sets channel status from spend (live = spend in the last four weeks), and records the run in
+`settings.whatagraph_sync`, which Admin shows. Organic & AI search = GA4 "Organic Search" + "AI Assistant" sessions,
+with GA4 key events stored as its conversions. Google Ads and Microsoft Ads are separate channels (the sheet's
+"Paid Search" is the two combined).
+
+Budget, spend, lead target, actual leads and YoY are entered by hand in Admin → Performance data (`perf_topline`).
 
 Calculation rules live in `lib/perf.ts`: ratios always from totals; month-on-month = weekly averages with week counts;
-no spend summed across markets; blank clicks estimated from CTR × impressions and flagged `*`; a week shows only if
-something had spend. Data checks (`lib/checks.ts`) are recomputed on every view and saved with each import.
+no spend summed across markets; a week shows only if something had spend. Data checks (`lib/checks.ts`) are recomputed
+on every view.
 
-### Hourly Google Sheet sync
+### Google Sheet copy
 
-`vercel.json` runs `/api/cron/sync-sheet` every hour. It exports the "OfficeHQ - Media Report & Tracker 2026" Google
-Sheet as .xlsx through the Drive API (service account, read-only), parses it with the same parser as the upload, and
-imports only if a value changed. The result is shown in Admin → Performance data, which also has **Sync now**.
-Needs `GOOGLE_SERVICE_ACCOUNT_KEY` (with the Drive API enabled and the sheet shared to the service account's email)
-and `CRON_SECRET`.
+Reporting has a second view: a read-only, formatted copy of the media report tab, refreshed hourly by
+`/api/cron/sync-sheet` (`vercel.json`) via the Sheets API. None of its numbers feed the portal. Needs
+`GOOGLE_SERVICE_ACCOUNT_KEY` (the whole service account .json, with the Sheets API enabled and the sheet shared to its
+email) and `CRON_SECRET`. The old .xlsx parser (`lib/parse-workbook.ts`) is kept for reference but no longer used.
 
 ## Whatagraph
 
@@ -70,12 +77,8 @@ npm run lint && npm run typecheck
 ```
 
 Database changes are SQL migrations in `supabase/migrations/`. The prototype seed (`scripts/build-seed.mjs`) was
-removed by `20260930000006_clear_prototype_seed.sql`; performance data now comes only from the media report
-(the "OfficeHQ - Media Report & Tracker 2026" Google Sheet, Master Report tab). Everything else is entered in Admin.
+removed by `20260930000006_clear_prototype_seed.sql`; performance data now comes only from Whatagraph.
+Everything else is entered in Admin.
 
 The admin area (`app/admin`) has its own layout and menu, separate from the client portal (`app/(portal)`).
 
-## v2 (later)
-
-Windsor.ai or Supermetrics writing nightly into `perf_weekly` (Vercel Cron or the connector's warehouse destination),
-with the upload kept as a manual override. Reconcile one month against Whatagraph first.

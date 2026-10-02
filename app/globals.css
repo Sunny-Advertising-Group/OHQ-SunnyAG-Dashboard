@@ -336,3 +336,20 @@ details.more summary{cursor:pointer;color:var(--muted);font-size:12.5px}
 .sheet td.sheet-flag{position:relative;cursor:help}
 .sheet td.sheet-flag::after,.sheet-flag-key{content:"";position:absolute;top:0;right:0;border-style:solid;border-width:0 7px 7px 0;border-color:transparent #e8710a transparent transparent}
 .sheet-flag-key{position:relative;display:inline-block;vertical-align:middle;margin-right:4px}
+
+/* Admin → Performance data: one month of hand-entered business reporting */
+.topline-row {
+  display: grid;
+  grid-template-columns: 110px repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line, #e5e5e5);
+}
+.topline-row .topline-month { align-self: center; }
+.topline-row > .row.full { grid-column: 1 / -1; }
+@media (max-width: 900px) {
+  .topline-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .topline-row .topline-month { grid-column: 1 / -1; }
+}
+.report th small.inprog{color:var(--gold-ink,#9a6b00);font-weight:600}

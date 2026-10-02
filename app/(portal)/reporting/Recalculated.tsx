@@ -3,9 +3,9 @@ import { getCore, getTopline } from "@/lib/data";
 import { fmtDate, money, monthName, num, pct } from "@/lib/format";
 import type { Perf, PerfWeek } from "@/lib/perf";
 
-// The "Master Report" tab of the media report, laid out as in the sheet:
+// The media report, laid out like the "Master Report" tab of the sheet:
 // months across (weeks, then a monthly total), markets and channels down.
-// Every ratio is recomputed from totals; estimated clicks are flagged with *.
+// Numbers come from Whatagraph; every ratio is recomputed from totals.
 
 type Col = { kind: "week"; w: PerfWeek & { i: number } } | { kind: "month"; month: string; weeks: number[] } | { kind: "total"; weeks: number[] };
 
@@ -51,13 +51,13 @@ const PAID: Metric[] = [
   { label: "Conversion rate", cell: (x) => pct(ratio(x.leads, x.clicks)) },
 ];
 const ORGANIC: Metric[] = [
-  { label: "Sessions", cell: (x) => num(x.sessions) },
-  { label: "Leads", cell: (x) => num(x.leads) },
+  { label: "Sessions (GA4)", cell: (x) => num(x.sessions) },
+  { label: "Conversions (GA4 key events)", cell: (x) => num(x.leads) },
   { label: "Conversion rate", cell: (x) => pct(ratio(x.leads, x.sessions)) },
 ];
 
-/** The report rebuilt from the portal's own data, with every ratio recalculated from totals. */
-export async function RecalculatedReport() {
+/** The media report from Whatagraph data, with every ratio recalculated from totals. */
+export async function RecalculatedReport({ today }: { today: string }) {
   const [{ markets, channels, perf }, topline] = await Promise.all([getCore(), getTopline()]);
 
   const weeks = perf.weeks();
@@ -72,6 +72,7 @@ export async function RecalculatedReport() {
   const idxOf = (c: Col) => (c.kind === "week" ? [c.w.i] : c.weeks);
   const cls = (c: Col) => (c.kind === "week" ? "r" : "r tot");
   const span = cols.length + 2;
+  const inProgress = perf.inProgressWeek(today);
 
   const top = new Map(topline.map((t) => [t.month.slice(0, 7), t]));
   const topIn = (c: Col) => (c.kind === "month" ? [top.get(c.month)].filter(Boolean) : c.kind === "total" ? months.map((m) => top.get(m)).filter(Boolean) : []) as typeof topline;
@@ -89,6 +90,7 @@ export async function RecalculatedReport() {
   const blocks = markets
     .map((m) => ({ m, chans: channels.filter((c) => perf.series(m.id, c.id)) }))
     .filter((b) => b.chans.length);
+  const anyDerived = blocks.some(({ m, chans }) => chans.some((c) => sums(perf, m.id, c.id, weeks.map((w) => w.i)).derived));
 
   return (
     <>
@@ -125,6 +127,7 @@ export async function RecalculatedReport() {
                         <th key={c.w.date} className="r">
                           {c.w.label}
                           <small>w/c {fmtDate(c.w.date)}</small>
+                          {c.w.date === inProgress && <small className="inprog">in progress</small>}
                         </th>
                       ) : (
                         <th key={`t${c.kind === "month" ? c.month : ""}`} className="r tot">
@@ -185,8 +188,10 @@ export async function RecalculatedReport() {
             </table>
           </div>
           <p className="meta" style={{ marginTop: 10 }}>
-            CTR, CPC and conversion rate are worked out from the totals, so monthly figures aren&apos;t sums of weekly percentages. * Some clicks are
-            estimated from CTR × impressions where the sheet had no click count. Spend is in each market&apos;s own currency.
+            From Whatagraph. CTR, CPC and conversion rate are worked out from the totals, so monthly figures aren&apos;t sums of weekly
+            percentages. Spend is in each market&apos;s own currency and is never added across markets. Organic &amp; AI search is GA4&apos;s
+            Organic Search and AI Assistant channels; its conversions are GA4 key events, not leads.
+            {anyDerived && " * Some clicks are estimated from CTR × impressions."}
           </p>
         </>
       )}

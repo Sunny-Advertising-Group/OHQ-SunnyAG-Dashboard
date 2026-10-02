@@ -310,6 +310,41 @@ export async function saveHours(_: ActionState, fd: FormData) {
 }
 
 // ---------------------------------------------------------------------------
+// Business reporting (budget, lead target, YoY): entered by hand, one row per month.
+// ---------------------------------------------------------------------------
+function numOrNull(fd: FormData, k: string, label: string): number | null {
+  const v = s(fd, k).replace(/[$,\s%]/g, "");
+  if (!v) return null;
+  const n = Number(v);
+  if (!Number.isFinite(n)) throw new Error(`${label} must be a number.`);
+  return n;
+}
+
+export async function saveTopline(_: ActionState, fd: FormData) {
+  return guard(async () => {
+    const { supabase } = await requireEditor();
+    const month = s(fd, "month");
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new Error("Pick a month.");
+    const yoy = numOrNull(fd, "leads_yoy_pct", "Lead % change YoY");
+    const row = {
+      month: `${month}-01`,
+      budget_aud: numOrNull(fd, "budget_aud", "Budget"),
+      spend_aud: numOrNull(fd, "spend_aud", "Spend"),
+      lead_target: numOrNull(fd, "lead_target", "Lead target"),
+      leads_actual: numOrNull(fd, "leads_actual", "Leads"),
+      leads_yoy_pct: yoy == null ? null : yoy / 100,
+      spend_pct: null,
+    };
+    if (row.budget_aud == null && row.spend_aud == null && row.lead_target == null && row.leads_actual == null && yoy == null) {
+      check((await supabase.from("perf_topline").delete().eq("month", row.month)).error);
+      return done("Cleared");
+    }
+    check((await supabase.from("perf_topline").upsert(row)).error);
+    return done();
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Performance data: preview, then commit
 // ---------------------------------------------------------------------------
 const MEASURES = ["spend", "impressions", "clicks", "leads", "sessions", "sheet_ctr"] as const;
@@ -454,14 +489,13 @@ export async function commitImport(path: string, fileName: string): Promise<Acti
   });
 }
 
-/** "Sync now" in Admin → Performance data. The same sync runs every hour on its own. */
+/** "Refresh now" for the Google Sheet copy on Reporting. The same refresh runs every hour on its own. */
 export async function syncSheetNow(): Promise<ActionState> {
   return guard(async () => {
-    const { user } = await requireEditor();
-    const r = await syncFromSheet(user.id);
-    const report = r.report ? ` ${r.report.message}` : "";
-    if (!r.ok || (r.report && !r.report.ok)) throw new Error(`${r.message}${report}`);
-    return done(`${r.message}${report}`);
+    await requireEditor();
+    const r = await syncFromSheet();
+    if (!r.ok) throw new Error(r.message);
+    return done(r.message);
   });
 }
 

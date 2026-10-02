@@ -9,7 +9,7 @@ export function SyncNowButton() {
   return (
     <div className="row" style={{ gap: 10 }}>
       <button className="btn gold sm" type="button" disabled={pending} onClick={() => start(async () => setState(await syncSheetNow()))}>
-        {pending ? "Syncing…" : "Sync now"}
+        {pending ? "Refreshing…" : "Refresh now"}
       </button>
       {state?.ok && <span className="ok-msg">{state.ok}</span>}
       {state?.error && <span className="err-msg">{state.error}</span>}
